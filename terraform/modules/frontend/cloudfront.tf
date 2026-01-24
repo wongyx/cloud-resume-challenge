@@ -62,15 +62,14 @@ resource "aws_cloudfront_distribution" "resume" {
       restriction_type = "none"
     }
   }
-viewer_certificate {
-  # Use CloudFront default certificate when no custom domain
-  cloudfront_default_certificate = var.domain_name == "" ? true : false
-    
-  # Use ACM certificate when custom domain is specified
-  acm_certificate_arn      = var.domain_name != "" ? var.acm_certificate_arn : null
-  ssl_support_method       = var.domain_name != "" ? "sni-only" : null
-  minimum_protocol_version = var.domain_name != "" ? "TLSv1.2_2021" : null
-}
+
+  viewer_certificate {
+    # If we have an ACM certificate ARN, use it; otherwise use CloudFront default
+    cloudfront_default_certificate = var.acm_certificate_arn == "" ? true : false
+    acm_certificate_arn            = var.acm_certificate_arn != "" ? var.acm_certificate_arn : null
+    ssl_support_method             = var.acm_certificate_arn != "" ? "sni-only" : null
+    minimum_protocol_version       = var.acm_certificate_arn != "" ? "TLSv1.2_2021" : null
+  }
 
   tags = {
     Name        = "Resume CloudFront Distribution"

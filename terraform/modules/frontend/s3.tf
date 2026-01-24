@@ -7,6 +7,13 @@ resource "aws_s3_bucket" "resume" {
   }
 }
 
+resource "aws_s3_bucket_versioning" "resume" {
+  bucket = aws_s3_bucket.resume.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 resource "aws_s3_bucket_website_configuration" "resume" {
   bucket = aws_s3_bucket.resume.id
 
