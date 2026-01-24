@@ -1,0 +1,20 @@
+# Terraform files
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# File for setup reference
+reference-configs/
+export-prod-config.sh
+
+# Variable files with secrets
+*.tfvars
+!terraform.tfvars.example
+
+# Crash log files
+crash.log
+
+# IDE
+.vscode/
+.idea/
