@@ -25,3 +25,27 @@ variable "acm_certificate_arn" {
   type        = string
   default     = ""
 }
+
+variable "cloudflare_api_token_ssm_path" {
+  description = "SSM Parameter Store path for Cloudflare API token"
+  type        = string
+  default     = "/terraform/cloudflare/api_token"
+}
+
+variable "cloudflare_zone_id" {
+  description = "Cloudflare Zone ID"
+  type        = string
+  default     = ""
+}
+
+variable "dns_record_name" {
+  description = "DNS record name (e.g., 'test' for test.example.com, '@' for root domain)"
+  type        = string
+  default     = ""
+}
+
+variable "cloudflare_proxied" {
+  description = "Whether to proxy through Cloudflare (usually false for CloudFront)"
+  type        = bool
+  default     = false
+}
