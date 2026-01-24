@@ -66,3 +66,18 @@ module "dns" {
   environment             = var.environment
   cloudflare_proxied      = var.cloudflare_proxied
 }
+
+module "backend" {
+  source = "../../modules/backend"
+
+  environment          = var.environment
+  aws_region          = var.aws_region
+  dynamodb_table_name = "${var.environment}-${var.project_name}-visitor-counter"
+  billing_mode        = "PAY_PER_REQUEST" 
+  
+  common_tags = {
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "Terraform"
+  }
+}

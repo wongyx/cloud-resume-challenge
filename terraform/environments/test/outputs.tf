@@ -30,3 +30,13 @@ output "website_url" {
   description = "Full website URL"
   value       = var.domain_name != "" ? "https://${var.domain_name}" : module.frontend.cloudfront_url
 }
+
+output "dynamodb_table_name" {
+  description = "DynamoDB table name"
+  value       = module.backend.dynamodb_table_name
+}
+
+output "dynamodb_table_arn" {
+  description = "DynamoDB table ARN"
+  value       = module.backend.dynamodb_table_arn
+}
