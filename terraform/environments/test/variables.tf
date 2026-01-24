@@ -49,3 +49,8 @@ variable "cloudflare_proxied" {
   type        = bool
   default     = false
 }
+
+variable "project_name" {
+  description = "Project name"
+  type        = string
+}
