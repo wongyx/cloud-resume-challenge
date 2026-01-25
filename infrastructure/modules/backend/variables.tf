@@ -3,6 +3,12 @@ variable "environment" {
   type        = string
 }
 
+variable "domain_name" {
+  description = "Name of domain hosting the website"
+  type        = string
+  default     = ""
+}
+
 variable "dynamodb_table_name" {
   description = "Name of the DynamoDB table"
   type        = string
@@ -50,6 +56,18 @@ variable "lambda_memory_size" {
 
 variable "lambda_log_retention_days" {
   description = "CloudWatch log retention in days"
+  type        = number
+  default     = 7
+}
+
+variable "allowed_origins" {
+  description = "Allowed CORS origins for API Gateway"
+  type        = list(string)
+  default     = ["*"]
+}
+
+variable "api_gateway_log_retention_days" {
+  description = "CloudWatch log retention for API Gateway in days"
   type        = number
   default     = 7
 }

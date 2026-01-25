@@ -32,3 +32,18 @@ output "lambda_role_arn" {
   description = "ARN of the Lambda IAM role"
   value       = aws_iam_role.lambda_role.arn
 }
+
+output "api_gateway_url" {
+  description = "URL of the API Gateway"
+  value       = aws_apigatewayv2_stage.default.invoke_url
+}
+
+output "api_gateway_id" {
+  description = "ID of the API Gateway"
+  value       = aws_apigatewayv2_api.visitor_api.id
+}
+
+output "api_endpoint" {
+  description = "Full API endpoint for visitor counter"
+  value       = "${aws_apigatewayv2_stage.default.invoke_url}visitorCount/increment"
+}

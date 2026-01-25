@@ -1,5 +1,6 @@
 resource "aws_s3_bucket" "resume" {
   bucket = var.bucket_name
+  force_destroy = var.environment == "test" ? true : false
 
   tags = {
     Name        = "Resume Website"
@@ -7,12 +8,33 @@ resource "aws_s3_bucket" "resume" {
   }
 }
 
+locals {
+  index_html_content = templatefile("${path.module}/../../../frontend/index.html.tpl", {
+    api_endpoint = var.api_endpoint
+  })
+}
+
+locals {
+  mime_types = {
+    ".html" = "text/html"
+    ".css"  = "text/css"
+    ".js"   = "application/javascript"
+    ".json" = "application/json"
+    ".png"  = "image/png"
+    ".jpg"  = "image/jpeg"
+    ".jpeg" = "image/jpeg"
+    ".gif"  = "image/gif"
+    ".svg"  = "image/svg+xml"
+    ".ico"  = "image/x-icon"
+  }
+}
+
 resource "aws_s3_object" "index" {
   bucket       = aws_s3_bucket.resume.id
   key          = "index.html"
-  source       = "${path.module}/../../../frontend/index.html"
+  content      = local.index_html_content
   content_type = "text/html"
-  etag         = filemd5("${path.module}/../../../frontend/index.html")
+  etag         = md5(local.index_html_content)
 }
 
 resource "aws_s3_object" "style" {

@@ -106,19 +106,18 @@
       </ul>
     </section>
   </div>
-  <!--
   <script>
-    const url = "https://cu649u8va9.execute-api.ap-southeast-1.amazonaws.com/visitorCount/increment";
+    const url = "${api_endpoint}";
     fetch(url, {
-      method: "Post"
+      method: "POST"
     }).then(response => response.json())
     .then(data => {
       document.getElementById("visitorCount").textContent = data.current_count;
     })
     .catch(error => {
       console.error(error);
+      document.getElementById("visitorCount").textContent = "Error loading count";
     });
-  </script>
-  -->
+  </script> 
 </body>
 </html>
