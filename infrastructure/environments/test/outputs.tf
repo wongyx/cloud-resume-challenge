@@ -40,3 +40,13 @@ output "dynamodb_table_arn" {
   description = "DynamoDB table ARN"
   value       = module.backend.dynamodb_table_arn
 }
+
+output "lambda_function_name" {
+  description = "Lambda function name"
+  value       = module.backend.lambda_function_name
+}
+
+output "lambda_function_arn" {
+  description = "Lambda function ARN"
+  value       = module.backend.lambda_function_arn
+}

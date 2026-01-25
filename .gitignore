@@ -12,6 +12,14 @@ export-prod-config.sh
 *.tfvars
 !terraform.tfvars.example
 
+# Lambda packages
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
 # Crash log files
 crash.log
 
