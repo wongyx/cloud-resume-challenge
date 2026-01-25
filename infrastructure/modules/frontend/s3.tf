@@ -7,6 +7,22 @@ resource "aws_s3_bucket" "resume" {
   }
 }
 
+resource "aws_s3_object" "index" {
+  bucket       = aws_s3_bucket.resume.id
+  key          = "index.html"
+  source       = "${path.module}/../../../frontend/index.html"
+  content_type = "text/html"
+  etag         = filemd5("${path.module}/../../../frontend/index.html")
+}
+
+resource "aws_s3_object" "style" {
+  bucket       = aws_s3_bucket.resume.id
+  key          = "style.css"
+  source       = "${path.module}/../../../frontend/style.css"
+  content_type = "text/css"
+  etag         = filemd5("${path.module}/../../../frontend/style.css")
+}
+
 resource "aws_s3_bucket_versioning" "resume" {
   bucket = aws_s3_bucket.resume.id
   versioning_configuration {
