@@ -7,6 +7,10 @@ terraform {
   }
 }
 
+data "cloudflare_zone" "this" {
+  zone_id = var.cloudflare_zone_id
+}
+
 # DNS records for CloudFront
 resource "cloudflare_record" "resume" {
   zone_id = var.cloudflare_zone_id
@@ -47,13 +51,14 @@ resource "cloudflare_ruleset" "apex_redirect" {
     description = "301 redirect from apex to www subdomain"
     enabled     = true
     
-    expression = "http.request.full_uri wildcard \"*://${replace(var.record_name, "www.", "")}/*\""
+    # Match ONLY the apex domain (example.com)
+    expression = "(http.host eq \"${data.cloudflare_zone.this.name}\")"
     
     action_parameters {
       from_value {
         status_code = 301
         target_url {
-          expression = "concat(\"https://www.\", http.host, http.request.uri.path)"
+          expression = "concat(\"https://www.${data.cloudflare_zone.this.name}\", http.request.uri.path)"
         }
         preserve_query_string = true
       }
