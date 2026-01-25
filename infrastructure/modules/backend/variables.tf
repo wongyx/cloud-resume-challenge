@@ -24,3 +24,32 @@ variable "aws_region" {
   description = "AWS region"
   type        = string
 }
+
+variable "project_name" {
+  description = "Project name for resource naming"
+  type        = string
+}
+
+variable "lambda_runtime" {
+  description = "Lambda runtime"
+  type        = string
+  default     = "python3.11"
+}
+
+variable "lambda_timeout" {
+  description = "Lambda timeout in seconds"
+  type        = number
+  default     = 10
+}
+
+variable "lambda_memory_size" {
+  description = "Lambda memory size in MB"
+  type        = number
+  default     = 128
+}
+
+variable "lambda_log_retention_days" {
+  description = "CloudWatch log retention in days"
+  type        = number
+  default     = 7
+}

@@ -71,9 +71,15 @@ module "backend" {
   source = "../../modules/backend"
 
   environment          = var.environment
+  project_name         = var.project_name
   aws_region          = var.aws_region
   dynamodb_table_name = "${var.environment}-${var.project_name}-visitor-counter"
   billing_mode        = "PAY_PER_REQUEST" 
+
+  lambda_runtime           = "python3.11"
+  lambda_timeout           = 3
+  lambda_memory_size       = 128
+  lambda_log_retention_days = 7
   
   common_tags = {
     Environment = var.environment
