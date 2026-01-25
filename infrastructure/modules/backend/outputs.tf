@@ -45,5 +45,5 @@ output "api_gateway_id" {
 
 output "api_endpoint" {
   description = "Full API endpoint for visitor counter"
-  value       = "${aws_apigatewayv2_stage.default.invoke_url}/visitorCount/increment"
+  value       = "${aws_apigatewayv2_stage.default.invoke_url}visitorCount/increment"
 }

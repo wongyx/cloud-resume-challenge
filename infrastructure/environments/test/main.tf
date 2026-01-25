@@ -52,8 +52,9 @@ module "frontend" {
   environment = var.environment
   domain_name = var.domain_name
   acm_certificate_arn = var.domain_name != "" ? module.acm[0].certificate_arn : ""
+  api_endpoint = module.backend.api_endpoint
 
-  depends_on = [module.acm]
+  depends_on = [module.acm, module.backend.api_endpoint]
 }
 
 module "dns" {

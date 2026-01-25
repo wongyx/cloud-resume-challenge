@@ -19,3 +19,8 @@ variable "acm_certificate_arn" {
   type        = string
   default     = ""
 }
+
+variable "api_endpoint" {
+  description = "API Gateway endpoint URL for visitor counter"
+  type        = string
+}
