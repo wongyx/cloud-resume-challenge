@@ -48,12 +48,3 @@ resource "aws_lambda_function" "visitor_counter" {
     }
   )
 }
-
-# # Lambda Permission for API Gateway
-# resource "aws_lambda_permission" "api_gateway_invoke" {
-#   statement_id  = "AllowAPIGatewayInvoke"
-#   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.visitor_counter.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn    = "${aws_apigatewayv2_api.visitor_api.execution_arn}/*/*"
-# }

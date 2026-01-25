@@ -50,3 +50,13 @@ output "lambda_function_arn" {
   description = "Lambda function ARN"
   value       = module.backend.lambda_function_arn
 }
+
+output "api_gateway_url" {
+  description = "API Gateway base URL"
+  value       = module.backend.api_gateway_url
+}
+
+output "api_endpoint" {
+  description = "Full API endpoint for visitor counter"
+  value       = module.backend.api_endpoint
+}

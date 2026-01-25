@@ -73,6 +73,7 @@ module "backend" {
   environment          = var.environment
   project_name         = var.project_name
   aws_region          = var.aws_region
+  domain_name = var.domain_name
   dynamodb_table_name = "${var.environment}-${var.project_name}-visitor-counter"
   billing_mode        = "PAY_PER_REQUEST" 
 
@@ -80,6 +81,9 @@ module "backend" {
   lambda_timeout           = 3
   lambda_memory_size       = 128
   lambda_log_retention_days = 7
+
+  allowed_origins              = ["https://${var.domain_name}"]
+  api_gateway_log_retention_days = 7
   
   common_tags = {
     Environment = var.environment
