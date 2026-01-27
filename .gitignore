@@ -26,3 +26,12 @@ crash.log
 # IDE
 .vscode/
 .idea/
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Node
+node_modules/
+package-lock.json

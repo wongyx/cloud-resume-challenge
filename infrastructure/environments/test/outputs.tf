@@ -16,6 +16,11 @@ output "cloudfront_distribution_id" {
   value       = module.frontend.cloudfront_distribution_id
 }
 
+output "cloudfront_domain_name" {
+  description = "Domain name of the CloudFront distribution"
+  value       = module.frontend.cloudfront_domain_name
+}
+
 output "dns_record" {
   description = "DNS record hostname"
   value       = var.domain_name != "" ? module.dns[0].record_hostname : "No custom domain configured"
