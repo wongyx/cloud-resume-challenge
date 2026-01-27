@@ -200,33 +200,4 @@ jobs:
           echo "❌ Production smoke tests failed!"
           echo "::error::Production deployment verification failed. Please investigate immediately."
           exit 1
-```
 
-## Step 9: Update .gitignore
-
-**`.gitignore`**:
-```
-# Terraform
-*.tfstate
-*.tfstate.*
-.terraform/
-.terraform.lock.hcl
-*.tfvars
-!terraform.tfvars.example
-
-# Lambda packages
-*.zip
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Playwright
-test-results/
-playwright-report/
-playwright/.cache/
-
-# Node
-node_modules/
-package-lock.json
