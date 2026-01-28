@@ -54,3 +54,8 @@ variable "project_name" {
   description = "Project name"
   type        = string
 }
+
+variable "github_repo_name" {
+  description = "Name of repo on github for Cloud Resume Challenge"
+  type        = string
+}
