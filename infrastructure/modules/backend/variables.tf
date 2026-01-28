@@ -71,3 +71,13 @@ variable "api_gateway_log_retention_days" {
   type        = number
   default     = 7
 }
+
+variable "github_repo_name" {
+  description = "Name of repo on github for Cloud Resume Challenge"
+  type        = string
+}
+
+variable "s3_bucket_arn" {
+  description = "ARN of the S3 bucket"
+  type        = string
+}

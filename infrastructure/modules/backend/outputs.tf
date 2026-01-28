@@ -47,3 +47,8 @@ output "api_endpoint" {
   description = "Full API endpoint for visitor counter"
   value       = "${aws_apigatewayv2_stage.default.invoke_url}visitorCount/increment"
 }
+
+output "github_actions_role_arn" {
+  value       = aws_iam_role.github_actions.arn
+  description = "ARN of the IAM role for GitHub Actions"
+}
