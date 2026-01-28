@@ -4,7 +4,7 @@ on:
   workflow_dispatch:  # Manual trigger for testing
   push:
     branches:
-      - main
+      - cicd
 
 # CRITICAL: Must grant id-token permission for OIDC
 permissions:
