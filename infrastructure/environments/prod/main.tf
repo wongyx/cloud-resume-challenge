@@ -75,8 +75,6 @@ module "backend" {
   project_name         = var.project_name
   aws_region          = var.aws_region
   domain_name = var.domain_name
-  github_repo_name = var.github_repo_name
-  s3_bucket_arn = module.frontend.bucket_arn
   dynamodb_table_name = "${var.environment}-${var.project_name}-visitor-counter"
   billing_mode        = "PAY_PER_REQUEST" 
 
