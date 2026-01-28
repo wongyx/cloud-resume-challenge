@@ -33,5 +33,5 @@ jobs:
       - name: Test S3 Access
         run: |
           echo "Testing S3 permissions..."
-          aws s3 ls || echo "❌ Failed to list S3 buckets"
+          aws s3 ls s3://wyx-cloud-resume-test || echo "❌ Failed to list S3 buckets"
       
