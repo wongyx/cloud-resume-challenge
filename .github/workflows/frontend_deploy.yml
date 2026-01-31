@@ -97,7 +97,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
       
       - name: Install dependencies
         run: npm ci
@@ -112,14 +111,6 @@ jobs:
         run: |
           echo "Running Playwright smoke tests against ${TEST_WEBSITE_URL}"
           npx playwright test tests/smoke/full-integration.spec.ts
-      
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report-test
-          path: playwright-report/
-          retention-days: 30
       
       - name: Configure AWS credentials for rollback
         if: failure()
@@ -253,7 +244,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
       
       - name: Install dependencies
         run: npm ci
@@ -269,14 +259,6 @@ jobs:
         run: |
           echo "Running Playwright smoke tests against ${PROD_WEBSITE_URL}"
           npx playwright test tests/smoke/full-integration.spec.ts
-      
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report-prod
-          path: playwright-report/
-          retention-days: 30
       
       - name: Configure AWS credentials for rollback
         if: failure()
