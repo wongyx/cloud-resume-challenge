@@ -1,0 +1,336 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-test:
+    name: Deploy to Test
+    runs-on: ubuntu-latest
+    environment: test
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      index_version_id: ${{ steps.deploy.outputs.index_version_id }}
+      css_version_id: ${{ steps.deploy.outputs.css_version_id }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Generate version
+        id: version
+        run: echo "version=${{ github.sha }}" >> $GITHUB_OUTPUT
+      
+      - name: Convert template to HTML
+        run: |
+          API_ENDPOINT="${{ vars.API_ENDPOINT }}"
+          sed "s|\${api_endpoint}|${API_ENDPOINT}|g" frontend/index.html.tpl > frontend/index.html
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ap-southeast-1 
+      
+      - name: Get current version IDs before deployment
+        id: get-versions
+        run: |
+          BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}"
+          
+          # Get current version IDs (will be used for rollback if needed)
+          PREV_INDEX_VERSION=$(aws s3api head-object --bucket ${BUCKET_NAME} --key index.html --query 'VersionId' --output text 2>/dev/null || echo "none")
+          PREV_CSS_VERSION=$(aws s3api head-object --bucket ${BUCKET_NAME} --key style.css --query 'VersionId' --output text 2>/dev/null || echo "none")
+          
+          echo "prev_index_version=${PREV_INDEX_VERSION}" >> $GITHUB_OUTPUT
+          echo "prev_css_version=${PREV_CSS_VERSION}" >> $GITHUB_OUTPUT
+          
+          echo "Previous index.html version: ${PREV_INDEX_VERSION}"
+          echo "Previous style.css version: ${PREV_CSS_VERSION}"
+      
+      - name: Deploy to S3
+        id: deploy
+        run: |
+          BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}"
+          
+          # Deploy files and capture new version IDs
+          aws s3 cp frontend/index.html s3://${BUCKET_NAME}/index.html --cache-control "max-age=300"
+          INDEX_VERSION=$(aws s3api head-object --bucket ${BUCKET_NAME} --key index.html --query 'VersionId' --output text)
+          
+          aws s3 cp frontend/style.css s3://${BUCKET_NAME}/style.css --cache-control "max-age=86400"
+          CSS_VERSION=$(aws s3api head-object --bucket ${BUCKET_NAME} --key style.css --query 'VersionId' --output text)
+          
+          echo "index_version_id=${INDEX_VERSION}" >> $GITHUB_OUTPUT
+          echo "css_version_id=${CSS_VERSION}" >> $GITHUB_OUTPUT
+          
+          echo "Deployed index.html version: ${INDEX_VERSION}"
+          echo "Deployed style.css version: ${CSS_VERSION}"
+          
+          DISTRIBUTION_ID="${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}"
+          aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/*"
+      
+      - name: Store deployment metadata
+        run: |
+          BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}"
+          echo "${{ github.sha }}" > version.txt
+          aws s3 cp version.txt s3://${BUCKET_NAME}/version.txt
+
+  smoke-test-test:
+    name: Smoke Test (Test Environment)
+    needs: deploy-test
+    runs-on: ubuntu-latest
+    environment: test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      
+      - name: Run Playwright smoke tests
+        env:
+          TEST_WEBSITE_URL: ${{ vars.WEBSITE_URL}}
+          TEST_ENV: test
+        run: |
+          echo "Running Playwright smoke tests against ${TEST_WEBSITE_URL}"
+          npx playwright test tests/smoke/full-integration.spec.ts
+      
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-test
+          path: playwright-report/
+          retention-days: 30
+      
+      - name: Configure AWS credentials for rollback
+        if: failure()
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ap-southeast-1 
+      
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Smoke tests failed, rolling back using S3 versioning..."
+          
+          BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}"
+          
+          # Get the previous version IDs from the deploy job
+          PREV_INDEX_VERSION="${{ needs.deploy-test.outputs.index_version_id }}"
+          PREV_CSS_VERSION="${{ needs.deploy-test.outputs.css_version_id }}"
+          
+          # List versions to find the previous ones
+          echo "Finding previous versions..."
+          INDEX_VERSIONS=$(aws s3api list-object-versions --bucket ${BUCKET_NAME} --prefix index.html --query 'Versions[?IsLatest==`false`]|[0].VersionId' --output text)
+          CSS_VERSIONS=$(aws s3api list-object-versions --bucket ${BUCKET_NAME} --prefix style.css --query 'Versions[?IsLatest==`false`]|[0].VersionId' --output text)
+          
+          if [ "${INDEX_VERSIONS}" != "None" ] && [ -n "${INDEX_VERSIONS}" ]; then
+            echo "Rolling back index.html to version: ${INDEX_VERSIONS}"
+            aws s3api copy-object \
+              --bucket ${BUCKET_NAME} \
+              --copy-source ${BUCKET_NAME}/index.html?versionId=${INDEX_VERSIONS} \
+              --key index.html \
+              --metadata-directive REPLACE \
+              --cache-control "max-age=300"
+          else
+            echo "No previous version found for index.html"
+          fi
+          
+          if [ "${CSS_VERSIONS}" != "None" ] && [ -n "${CSS_VERSIONS}" ]; then
+            echo "Rolling back style.css to version: ${CSS_VERSIONS}"
+            aws s3api copy-object \
+              --bucket ${BUCKET_NAME} \
+              --copy-source ${BUCKET_NAME}/style.css?versionId=${CSS_VERSIONS} \
+              --key style.css \
+              --metadata-directive REPLACE \
+              --cache-control "max-age=86400"
+          else
+            echo "No previous version found for style.css"
+          fi
+          
+          DISTRIBUTION_ID="${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}"
+          aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/*"
+          
+          echo "✓ Rollback completed using S3 versioning"
+
+  deploy-prod:
+    name: Deploy to Production
+    needs: smoke-test-test
+    runs-on: ubuntu-latest
+    environment: prod
+    outputs:
+      index_version_id: ${{ steps.deploy.outputs.index_version_id }}
+      css_version_id: ${{ steps.deploy.outputs.css_version_id }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Convert template to HTML
+        run: |
+          API_ENDPOINT="${{ vars.API_ENDPOINT }}"
+          sed "s|\${api_endpoint}|${API_ENDPOINT}|g" frontend/index.html.tpl > frontend/index.html
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ap-southeast-1  # Update to your region
+      
+      - name: Get current version IDs before deployment
+        id: get-versions
+        run: |
+          BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}"
+          
+          # Get current version IDs (will be used for rollback if needed)
+          PREV_INDEX_VERSION=$(aws s3api head-object --bucket ${BUCKET_NAME} --key index.html --query 'VersionId' --output text 2>/dev/null || echo "none")
+          PREV_CSS_VERSION=$(aws s3api head-object --bucket ${BUCKET_NAME} --key style.css --query 'VersionId' --output text 2>/dev/null || echo "none")
+          
+          echo "prev_index_version=${PREV_INDEX_VERSION}" >> $GITHUB_OUTPUT
+          echo "prev_css_version=${PREV_CSS_VERSION}" >> $GITHUB_OUTPUT
+          
+          echo "Previous index.html version: ${PREV_INDEX_VERSION}"
+          echo "Previous style.css version: ${PREV_CSS_VERSION}"
+      
+      - name: Deploy to S3
+        id: deploy
+        run: |
+          BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}"
+          
+          # Deploy files and capture new version IDs
+          aws s3 cp frontend/index.html s3://${BUCKET_NAME}/index.html --cache-control "max-age=300"
+          INDEX_VERSION=$(aws s3api head-object --bucket ${BUCKET_NAME} --key index.html --query 'VersionId' --output text)
+          
+          aws s3 cp frontend/style.css s3://${BUCKET_NAME}/style.css --cache-control "max-age=86400"
+          CSS_VERSION=$(aws s3api head-object --bucket ${BUCKET_NAME} --key style.css --query 'VersionId' --output text)
+          
+          echo "index_version_id=${INDEX_VERSION}" >> $GITHUB_OUTPUT
+          echo "css_version_id=${CSS_VERSION}" >> $GITHUB_OUTPUT
+          
+          echo "Deployed index.html version: ${INDEX_VERSION}"
+          echo "Deployed style.css version: ${CSS_VERSION}"
+          
+          DISTRIBUTION_ID="${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}"
+          aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/*"
+      
+      - name: Store deployment metadata
+        run: |
+          BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}"
+          echo "${{ github.sha }}" > version.txt
+          aws s3 cp version.txt s3://${BUCKET_NAME}/version.txt
+
+  smoke-test-prod:
+    name: Smoke Test (Production)
+    needs: deploy-prod
+    runs-on: ubuntu-latest
+    environment: prod
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      
+      - name: Run Playwright smoke tests
+        id: smoke-test
+        env:
+          PROD_WEBSITE_URL: ${{ vars.WEBSITE_URL }}
+          TEST_ENV : prod
+        run: |
+          echo "Running Playwright smoke tests against ${PROD_WEBSITE_URL}"
+          npx playwright test tests/smoke/full-integration.spec.ts
+      
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-prod
+          path: playwright-report/
+          retention-days: 30
+      
+      - name: Configure AWS credentials for rollback
+        if: failure()
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ap-southeast-1  
+      
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Production smoke tests failed, initiating rollback using S3 versioning..."
+          
+          BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}"
+          
+          # List versions to find the previous ones (second most recent, as latest is the failed deployment)
+          echo "Finding previous versions..."
+          INDEX_VERSIONS=$(aws s3api list-object-versions --bucket ${BUCKET_NAME} --prefix index.html --query 'Versions[?IsLatest==`false`]|[0].VersionId' --output text)
+          CSS_VERSIONS=$(aws s3api list-object-versions --bucket ${BUCKET_NAME} --prefix style.css --query 'Versions[?IsLatest==`false`]|[0].VersionId' --output text)
+          
+          if [ "${INDEX_VERSIONS}" != "None" ] && [ -n "${INDEX_VERSIONS}" ]; then
+            echo "Rolling back index.html to version: ${INDEX_VERSIONS}"
+            aws s3api copy-object \
+              --bucket ${BUCKET_NAME} \
+              --copy-source ${BUCKET_NAME}/index.html?versionId=${INDEX_VERSIONS} \
+              --key index.html \
+              --metadata-directive REPLACE \
+              --cache-control "max-age=300"
+            echo "✓ Rolled back index.html"
+          else
+            echo "WARNING: No previous version found for index.html"
+          fi
+          
+          if [ "${CSS_VERSIONS}" != "None" ] && [ -n "${CSS_VERSIONS}" ]; then
+            echo "Rolling back style.css to version: ${CSS_VERSIONS}"
+            aws s3api copy-object \
+              --bucket ${BUCKET_NAME} \
+              --copy-source ${BUCKET_NAME}/style.css?versionId=${CSS_VERSIONS} \
+              --key style.css \
+              --metadata-directive REPLACE \
+              --cache-control "max-age=86400"
+            echo "✓ Rolled back style.css"
+          else
+            echo "WARNING: No previous version found for style.css"
+          fi
+          
+          # If using CloudFront, invalidate cache after rollback
+          # DISTRIBUTION_ID="${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}"
+          # aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/*"
+          
+          echo "✓ Rollback completed using S3 versioning"
+      
+      - name: Notify on rollback
+        if: failure()
+        run: |
+          echo "::error::Production deployment failed smoke tests and was rolled back to previous version"
+          # TODO: Add notification logic here (Slack, email, etc.)
