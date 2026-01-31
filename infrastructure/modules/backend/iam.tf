@@ -125,6 +125,7 @@ resource "aws_iam_policy" "github_actions" {
         ]
         Resource = aws_lambda_function.visitor_counter.arn
       },
+      # Allow invalidation of cloudfront
       {
       "Effect": "Allow",
       "Action": [
