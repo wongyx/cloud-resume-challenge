@@ -234,7 +234,6 @@ jobs:
     name: Smoke Test (Production)
     needs: deploy-prod
     runs-on: ubuntu-latest
-    environment: prod
     
     steps:
       - name: Checkout code
