@@ -102,7 +102,7 @@
       <h2>Hobbies & Interests</h2>
       <ul>
         <li>Casual hiking</li>
-        <li>Travelling to natural destination</li>
+        <li>Travelling to natural destinations</li>
       </ul>
     </section>
   </div>
