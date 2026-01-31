@@ -52,6 +52,19 @@ resource "aws_s3_bucket_versioning" "resume" {
   }
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "example" {
+  bucket = aws_s3_bucket.resume.id
+
+  rule {
+    id     = "delete-old-versions"
+    status = "Enabled"
+
+    noncurrent_version_expiration {
+      noncurrent_days = 3
+    }
+  }
+}
+
 resource "aws_s3_bucket_website_configuration" "resume" {
   bucket = aws_s3_bucket.resume.id
 
