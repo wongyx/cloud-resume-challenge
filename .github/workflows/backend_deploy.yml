@@ -1,0 +1,470 @@
+name: Deploy Backend Lambda
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/lambda_code/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-test:
+    name: Deploy to Test
+    runs-on: ubuntu-latest
+    environment: test
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      function_version: ${{ steps.deploy.outputs.function_version }}
+      prev_version: ${{ steps.setup.outputs.prev_version }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Generate version
+        id: version
+        run: echo "version=${{ github.sha }}" >> $GITHUB_OUTPUT
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies and create deployment package
+        run: |
+          cd backend/lambda_code/visitor_counter
+          
+          # Install dependencies to a package directory if requirements.txt exists
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt -t package/
+            cp index.py package/
+            cd package
+            zip -r ../visitor_counter.zip .
+            cd ..
+            rm -rf package
+          else
+            # No dependencies, just zip the Lambda code
+            zip visitor_counter.zip index.py
+          fi
+          
+          echo "Deployment package created: visitor_counter.zip"
+          ls -lh visitor_counter.zip
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ap-southeast-1
+      
+      - name: One-time setup - Enable versioning and create alias
+        id: setup
+        run: |
+          FUNCTION_NAME="${{ vars.LAMBDA_FUNCTION_NAME }}"
+          ALIAS_NAME="test"
+          
+          # Check if alias already exists
+          if aws lambda get-alias --function-name ${FUNCTION_NAME} --name ${ALIAS_NAME} 2>/dev/null; then
+            echo "Alias '${ALIAS_NAME}' already exists - skipping setup"
+            CURRENT_VERSION=$(aws lambda get-alias \
+              --function-name ${FUNCTION_NAME} \
+              --name ${ALIAS_NAME} \
+              --query 'FunctionVersion' \
+              --output text)
+            echo "prev_version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
+          else
+            echo "First time setup - creating initial version and alias"
+            
+            # Publish current $LATEST as version 1
+            INITIAL_VERSION=$(aws lambda publish-version \
+              --function-name ${FUNCTION_NAME} \
+              --description "Initial version for CI/CD" \
+              --query 'Version' \
+              --output text)
+            
+            echo "Published initial version: ${INITIAL_VERSION}"
+            
+            # Create alias pointing to this version
+            aws lambda create-alias \
+              --function-name ${FUNCTION_NAME} \
+              --name ${ALIAS_NAME} \
+              --function-version ${INITIAL_VERSION} \
+              --description "Test environment alias"
+            
+            echo "Created alias '${ALIAS_NAME}' pointing to version ${INITIAL_VERSION}"
+            echo "prev_version=${INITIAL_VERSION}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Deploy to Lambda
+        id: deploy
+        run: |
+          FUNCTION_NAME="${{ vars.LAMBDA_FUNCTION_NAME }}"
+          
+          # Update Lambda function code
+          aws lambda update-function-code \
+            --function-name ${FUNCTION_NAME} \
+            --zip-file fileb://backend/lambda_code/visitor_counter/visitor_counter.zip \
+            --publish
+          
+          # Wait for update to complete
+          echo "Waiting for Lambda update to complete..."
+          aws lambda wait function-updated --function-name ${FUNCTION_NAME}
+          
+          # Get the new version number
+          NEW_VERSION=$(aws lambda list-versions-by-function \
+            --function-name ${FUNCTION_NAME} \
+            --query 'Versions[-1].Version' \
+            --output text)
+          
+          echo "function_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "Deployed Lambda version: ${NEW_VERSION}"
+          
+          # Update alias to point to new version
+          ALIAS_NAME="test"
+          
+          # Check if alias exists
+          if aws lambda get-alias --function-name ${FUNCTION_NAME} --name ${ALIAS_NAME} 2>/dev/null; then
+            # Update existing alias
+            aws lambda update-alias \
+              --function-name ${FUNCTION_NAME} \
+              --name ${ALIAS_NAME} \
+              --function-version ${NEW_VERSION}
+            echo "Updated alias '${ALIAS_NAME}' to version ${NEW_VERSION}"
+          else
+            # Create new alias
+            aws lambda create-alias \
+              --function-name ${FUNCTION_NAME} \
+              --name ${ALIAS_NAME} \
+              --function-version ${NEW_VERSION}
+            echo "Created alias '${ALIAS_NAME}' pointing to version ${NEW_VERSION}"
+          fi
+      
+      - name: Store deployment metadata
+        run: |
+          FUNCTION_NAME="${{ vars.LAMBDA_FUNCTION_NAME }}"
+          
+          # Tag the Lambda function with deployment metadata
+          aws lambda tag-resource \
+            --resource $(aws lambda get-function --function-name ${FUNCTION_NAME} --query 'Configuration.FunctionArn' --output text) \
+            --tags "DeploymentVersion=${{ github.sha }}" "DeployedAt=$(date -u +%Y-%m-%dT%H:%M:%SZ)" "Environment=test"
+
+  smoke-test-test:
+    name: Smoke Test (Test Environment)
+    needs: deploy-test
+    runs-on: ubuntu-latest
+    environment: test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ap-southeast-1
+      
+      - name: Test Lambda function
+        id: lambda-test
+        run: |
+          FUNCTION_NAME="${{ vars.LAMBDA_FUNCTION_NAME }}"
+          ALIAS_NAME="test"
+          
+          echo "Testing Lambda function ${FUNCTION_NAME}:${ALIAS_NAME}"
+          
+          # Invoke Lambda function with test event
+          RESPONSE=$(aws lambda invoke \
+            --function-name ${FUNCTION_NAME}:${ALIAS_NAME} \
+            --payload '{"httpMethod":"GET","path":"/count"}' \
+            --cli-binary-format raw-in-base64-out \
+            response.json)
+          
+          echo "Lambda Response:"
+          cat response.json
+          
+          # Check if the response is valid
+          STATUS_CODE=$(jq -r '.statusCode' response.json)
+          
+          if [ "${STATUS_CODE}" != "200" ]; then
+            echo "::error::Lambda returned status code ${STATUS_CODE}"
+            exit 1
+          fi
+          
+          echo "✓ Lambda function test passed"
+      
+      - name: Setup Node.js for integration tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      
+      - name: Run integration tests
+        env:
+          TEST_WEBSITE_URL: ${{ vars.WEBSITE_URL }}
+          TEST_ENV: test
+        run: |
+          echo "Running integration tests against ${TEST_WEBSITE_URL}"
+          npx playwright test tests/smoke/full-integration.spec.ts
+      
+      - name: Rollback on failure
+        if: failure()
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ap-southeast-1
+      
+      - name: Execute rollback
+        if: failure()
+        run: |
+          echo "Smoke tests failed, rolling back Lambda function..."
+          
+          FUNCTION_NAME="${{ vars.LAMBDA_FUNCTION_NAME }}"
+          ALIAS_NAME="test"
+          PREV_VERSION="${{ needs.deploy-test.outputs.prev_version }}"
+          
+          echo "Rolling back alias '${ALIAS_NAME}' to version: ${PREV_VERSION}"
+          
+          aws lambda update-alias \
+            --function-name ${FUNCTION_NAME} \
+            --name ${ALIAS_NAME} \
+            --function-version ${PREV_VERSION}
+          
+          echo "✓ Rollback completed to version ${PREV_VERSION}"
+
+  deploy-prod:
+    name: Deploy to Production
+    needs: smoke-test-test
+    runs-on: ubuntu-latest
+    environment: prod
+    outputs:
+      function_version: ${{ steps.deploy.outputs.function_version }}
+      prev_version: ${{ steps.setup.outputs.prev_version }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies and create deployment package
+        run: |
+          cd backend/lambda_code/visitor_counter
+          
+          # Install dependencies to a package directory if requirements.txt exists
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt -t package/
+            cp index.py package/
+            cd package
+            zip -r ../visitor_counter.zip .
+            cd ..
+            rm -rf package
+          else
+            # No dependencies, just zip the Lambda code
+            zip visitor_counter.zip index.py
+          fi
+          
+          echo "Deployment package created: visitor_counter.zip"
+          ls -lh visitor_counter.zip
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ap-southeast-1
+      
+      - name: One-time setup - Enable versioning and create alias
+        id: setup
+        run: |
+          FUNCTION_NAME="${{ vars.LAMBDA_FUNCTION_NAME }}"
+          ALIAS_NAME="prod"
+          
+          # Check if alias already exists
+          if aws lambda get-alias --function-name ${FUNCTION_NAME} --name ${ALIAS_NAME} 2>/dev/null; then
+            echo "Alias '${ALIAS_NAME}' already exists - skipping setup"
+            CURRENT_VERSION=$(aws lambda get-alias \
+              --function-name ${FUNCTION_NAME} \
+              --name ${ALIAS_NAME} \
+              --query 'FunctionVersion' \
+              --output text)
+            echo "prev_version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
+          else
+            echo "First time setup - creating initial version and alias"
+            
+            # Publish current $LATEST as version 1
+            INITIAL_VERSION=$(aws lambda publish-version \
+              --function-name ${FUNCTION_NAME} \
+              --description "Initial version for CI/CD" \
+              --query 'Version' \
+              --output text)
+            
+            echo "Published initial version: ${INITIAL_VERSION}"
+            
+            # Create alias pointing to this version
+            aws lambda create-alias \
+              --function-name ${FUNCTION_NAME} \
+              --name ${ALIAS_NAME} \
+              --function-version ${INITIAL_VERSION} \
+              --description "Production environment alias"
+            
+            echo "Created alias '${ALIAS_NAME}' pointing to version ${INITIAL_VERSION}"
+            echo "prev_version=${INITIAL_VERSION}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Deploy to Lambda
+        id: deploy
+        run: |
+          FUNCTION_NAME="${{ vars.LAMBDA_FUNCTION_NAME }}"
+          
+          # Update Lambda function code and publish new version
+          aws lambda update-function-code \
+            --function-name ${FUNCTION_NAME} \
+            --zip-file fileb://backend/lambda_code/visitor_counter/visitor_counter.zip \
+            --publish
+          
+          # Wait for update to complete
+          echo "Waiting for Lambda update to complete..."
+          aws lambda wait function-updated --function-name ${FUNCTION_NAME}
+          
+          # Get the new version number
+          NEW_VERSION=$(aws lambda list-versions-by-function \
+            --function-name ${FUNCTION_NAME} \
+            --query 'Versions[-1].Version' \
+            --output text)
+          
+          echo "function_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "Deployed Lambda version: ${NEW_VERSION}"
+          
+          # Update production alias to point to new version
+          ALIAS_NAME="prod"
+          
+          # Check if alias exists
+          if aws lambda get-alias --function-name ${FUNCTION_NAME} --name ${ALIAS_NAME} 2>/dev/null; then
+            # Update existing alias
+            aws lambda update-alias \
+              --function-name ${FUNCTION_NAME} \
+              --name ${ALIAS_NAME} \
+              --function-version ${NEW_VERSION}
+            echo "Updated alias '${ALIAS_NAME}' to version ${NEW_VERSION}"
+          else
+            # Create new alias
+            aws lambda create-alias \
+              --function-name ${FUNCTION_NAME} \
+              --name ${ALIAS_NAME} \
+              --function-version ${NEW_VERSION}
+            echo "Created alias '${ALIAS_NAME}' pointing to version ${NEW_VERSION}"
+          fi
+      
+      - name: Store deployment metadata
+        run: |
+          FUNCTION_NAME="${{ vars.LAMBDA_FUNCTION_NAME }}"
+          
+          # Tag the Lambda function with deployment metadata
+          aws lambda tag-resource \
+            --resource $(aws lambda get-function --function-name ${FUNCTION_NAME} --query 'Configuration.FunctionArn' --output text) \
+            --tags "DeploymentVersion=${{ github.sha }}" "DeployedAt=$(date -u +%Y-%m-%dT%H:%M:%SZ)" "Environment=prod"
+
+  smoke-test-prod:
+    name: Smoke Test (Production)
+    needs: deploy-prod
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ap-southeast-1
+      
+      - name: Test Lambda function
+        id: lambda-test
+        run: |
+          FUNCTION_NAME="${{ vars.LAMBDA_FUNCTION_NAME }}"
+          ALIAS_NAME="prod"
+          
+          echo "Testing production Lambda function ${FUNCTION_NAME}:${ALIAS_NAME}"
+          
+          # Invoke Lambda function with test event
+          RESPONSE=$(aws lambda invoke \
+            --function-name ${FUNCTION_NAME}:${ALIAS_NAME} \
+            --payload '{"httpMethod":"GET","path":"/count"}' \
+            --cli-binary-format raw-in-base64-out \
+            response.json)
+          
+          echo "Lambda Response:"
+          cat response.json
+          
+          # Check if the response is valid
+          STATUS_CODE=$(jq -r '.statusCode' response.json)
+          
+          if [ "${STATUS_CODE}" != "200" ]; then
+            echo "::error::Lambda returned status code ${STATUS_CODE}"
+            exit 1
+          fi
+          
+          echo "✓ Lambda function test passed"
+      
+      - name: Setup Node.js for integration tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      
+      - name: Run integration tests
+        id: smoke-test
+        env:
+          PROD_WEBSITE_URL: ${{ vars.WEBSITE_URL }}
+          TEST_ENV: prod
+        run: |
+          echo "Running integration tests against ${PROD_WEBSITE_URL}"
+          npx playwright test tests/smoke/full-integration.spec.ts
+      
+      - name: Configure AWS credentials for rollback
+        if: failure()
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ap-southeast-1
+      
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Production smoke tests failed, initiating rollback..."
+          
+          FUNCTION_NAME="${{ vars.LAMBDA_FUNCTION_NAME }}"
+          ALIAS_NAME="prod"
+          PREV_VERSION="${{ needs.deploy-prod.outputs.prev_version }}"
+          
+          echo "Rolling back alias '${ALIAS_NAME}' to version: ${PREV_VERSION}"
+          
+          aws lambda update-alias \
+            --function-name ${FUNCTION_NAME} \
+            --name ${ALIAS_NAME} \
+            --function-version ${PREV_VERSION}
+          
+          echo "✓ Rollback completed to version ${PREV_VERSION}"
+      
+      - name: Notify on rollback
+        if: failure()
+        run: |
+          echo "::error::Production deployment failed smoke tests and was rolled back to previous version"
+          # TODO: Add notification logic here (Slack, email, etc.)
