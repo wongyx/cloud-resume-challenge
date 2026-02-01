@@ -38,7 +38,7 @@ def lambda_handler(event,context):
             },
             'body': json.dumps({
                 'message' : 'Count updated successfully',
-                'current_count' : int(new_count)
+                # 'current_count' : int(new_count)
             })
         }
     except Exception as e:
