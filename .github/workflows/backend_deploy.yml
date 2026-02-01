@@ -150,7 +150,7 @@ jobs:
           # Tag the Lambda function with deployment metadata
           aws lambda tag-resource \
             --resource $(aws lambda get-function --function-name ${FUNCTION_NAME} --query 'Configuration.FunctionArn' --output text) \
-            --tags "DeploymentVersion=${{ github.sha }}" "DeployedAt=$(date -u +%Y-%m-%dT%H:%M:%SZ)" "Environment=test"
+            --tags "DeploymentVersion=${{ github.sha }},DeployedAt=$(date -u +%Y-%m-%dT%H:%M:%SZ),Environment=test"
 
   smoke-test-test:
     name: Smoke Test (Test Environment)
@@ -373,7 +373,7 @@ jobs:
           # Tag the Lambda function with deployment metadata
           aws lambda tag-resource \
             --resource $(aws lambda get-function --function-name ${FUNCTION_NAME} --query 'Configuration.FunctionArn' --output text) \
-            --tags "DeploymentVersion=${{ github.sha }}" "DeployedAt=$(date -u +%Y-%m-%dT%H:%M:%SZ)" "Environment=prod"
+            --tags "DeploymentVersion=${{ github.sha }},DeployedAt=$(date -u +%Y-%m-%dT%H:%M:%SZ),Environment=prod"
 
   smoke-test-prod:
     name: Smoke Test (Production)
