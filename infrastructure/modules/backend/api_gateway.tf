@@ -60,6 +60,13 @@ resource "aws_cloudwatch_log_group" "api_gateway_log_group" {
   )
 }
 
+resource "aws_lambda_alias" "environment_alias" {
+  name             = var.environment
+  description      = "Alias for ${var.environment} environment"
+  function_name    = aws_lambda_function.visitor_counter.function_name
+  function_version = "$LATEST"  
+}
+
 # Lambda Integration
 resource "aws_apigatewayv2_integration" "lambda_integration" {
   api_id           = aws_apigatewayv2_api.visitor_api.id
@@ -68,7 +75,7 @@ resource "aws_apigatewayv2_integration" "lambda_integration" {
   connection_type      = "INTERNET"
   description          = "Lambda integration for visitor counter"
   integration_method   = "POST"
-  integration_uri      = aws_lambda_function.visitor_counter.invoke_arn
+  integration_uri = aws_lambda_alias.environment_alias.invoke_arn
   passthrough_behavior = "WHEN_NO_MATCH"
 }
 
@@ -84,6 +91,7 @@ resource "aws_lambda_permission" "api_gateway_invoke" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.visitor_counter.function_name
+  qualifier     = aws_lambda_alias.environment_alias.name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.visitor_api.execution_arn}/*/*"
 }
