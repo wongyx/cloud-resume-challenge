@@ -114,15 +114,21 @@ resource "aws_iam_policy" "github_actions" {
         ]
         Resource = [var.s3_bucket_arn, "${var.s3_bucket_arn}/*"]
       },
-      # Lambda - Update function code
+      # Lambda - Update lambda function code
       {
         Effect = "Allow"
         Action = [
-          "lambda:UpdateFunctionCode",
-          "lambda:UpdateFunctionConfiguration",
-          "lambda:GetFunction",
-          "lambda:GetFunctionConfiguration",
-          "lambda:PublishVersion"
+        "lambda:UpdateFunctionCode",
+        "lambda:GetFunction",
+        "lambda:GetFunctionConfiguration",
+        "lambda:PublishVersion",
+        "lambda:ListVersionsByFunction",
+        "lambda:GetAlias",
+        "lambda:CreateAlias",
+        "lambda:UpdateAlias",
+        "lambda:InvokeFunction",
+        "lambda:TagResource",
+        "lambda:ListTags"
         ]
         Resource = aws_lambda_function.visitor_counter.arn
       },
