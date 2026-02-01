@@ -35,6 +35,10 @@ resource "aws_s3_object" "index" {
   content      = local.index_html_content
   content_type = "text/html"
   etag         = md5(local.index_html_content)
+
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 resource "aws_s3_object" "style" {
@@ -43,6 +47,10 @@ resource "aws_s3_object" "style" {
   source       = "${path.module}/../../../frontend/style.css"
   content_type = "text/css"
   etag         = filemd5("${path.module}/../../../frontend/style.css")
+
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 resource "aws_s3_bucket_versioning" "resume" {
@@ -58,6 +66,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "example" {
   rule {
     id     = "delete-old-versions"
     status = "Enabled"
+    filter {}
 
     noncurrent_version_expiration {
       noncurrent_days = 3
