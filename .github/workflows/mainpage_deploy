@@ -34,20 +34,18 @@ jobs:
         run: |
           BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}"
           
-          # Deploy files and capture new version IDs
+          # Deploy files
           aws s3 cp frontend/index.html s3://${BUCKET_NAME}/index.html --cache-control "max-age=300"
           
           aws s3 cp frontend/style.css s3://${BUCKET_NAME}/style.css --cache-control "max-age=86400"
           
-          echo "Deployed index.html version: ${INDEX_VERSION}"
-          echo "Deployed style.css version: ${CSS_VERSION}"
           
           DISTRIBUTION_ID="${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}"
           aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/*"
 
   deploy-prod:
     name: Deploy to Production
-    needs: smoke-test-test
+    needs: deploy-test
     runs-on: ubuntu-latest
     environment: prod
     
@@ -66,13 +64,10 @@ jobs:
         run: |
           BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}"
           
-          # Deploy files and capture new version IDs
+          # Deploy files
           aws s3 cp frontend/index.html s3://${BUCKET_NAME}/index.html --cache-control "max-age=300"
           
           aws s3 cp frontend/style.css s3://${BUCKET_NAME}/style.css --cache-control "max-age=86400"
-
-          echo "Deployed index.html version: ${INDEX_VERSION}"
-          echo "Deployed style.css version: ${CSS_VERSION}"
           
           DISTRIBUTION_ID="${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}"
           aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/*"

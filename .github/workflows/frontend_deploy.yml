@@ -34,7 +34,7 @@ jobs:
       - name: Convert template to HTML
         run: |
           API_ENDPOINT="${{ vars.API_ENDPOINT }}"
-          sed "s|\${api_endpoint}|${API_ENDPOINT}|g" frontend/resumee.html.tpl > frontend/resumee.html
+          sed "s|\${api_endpoint}|${API_ENDPOINT}|g" frontend/resume.html.tpl > frontend/resume.html
       
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
