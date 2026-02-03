@@ -1,105 +1,254 @@
-body {
-  font-family: Arial, Helvetica, sans-serif;
-  background: #f5f7fa;
-  color: #333;
-  margin: 0;
-  padding: 0;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Will Garbutt - Links</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --text-color: #333333;
+            --container-bg: rgba(255, 255, 255, 0.8);
+            --button-color: #4e3954;
+            --button-hover: #6e5474;
+            --button-text: #ffffff;
+        }
 
-.container {
-  max-width: 900px;
-  margin: 40px auto;
-  background: #ffffff;
-  padding: 40px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            transition: all 0.3s ease;
+        }
 
-header.resume-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 30px;
-}
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin: 0 auto 20px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
 
-header h1 {
-  margin: 0;
-  font-size: 32px;
-}
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }        
+        .container {
+            text-align: center;
+            width: 300px;
+            padding: 20px;
+            background: var(--container-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            transition: all 0.3s ease;
+        }
 
-.contact {
-  margin-top: 8px;
-  font-size: 14px;
-}
+        .avatar {
+            width: 100px;
+            height: 100px;
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
 
-.contact a {
-  color: #0066cc;
-  text-decoration: none;
-}
+        .avatar:hover {
+            transform: scale(1.1);
+        }
 
-section {
-  margin-bottom: 28px;
-}
+        .avatar-icon {
+            width: 60px;
+            height: 60px;
+            background-color: #8E24AA;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
 
-h2 {
-  border-bottom: 2px solid #0066cc;
-  padding-bottom: 6px;
-  margin-bottom: 16px;
-  font-size: 22px;
-}
+        h1 {
+            margin: 10px 0;
+            font-weight: 600;
+        }
 
-.item {
-  margin-bottom: 16px;
-}
+        p {
+            margin: 5px 0;
+            font-weight: 300;
+        }
 
-.item h3 {
-  margin: 0;
-  font-size: 18px;
-}
+        .social-icons {
+            margin: 20px 0;
+        }
 
-.date {
-  font-size: 13px;
-  color: #666;
-}
+        .social-icons a {
+            color: var(--text-color);
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 1.2em;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
 
-ul {
-  padding-left: 20px;
-}
+        .social-icons a:hover {
+            transform: scale(1.2);
+            color: var(--button-color);
+        }
 
-.skills li {
-  list-style-type: square;
-}
+        .button {
+            --transition-timing: 0.3s cubic-bezier(0.310, -0.105, 0.430, 1.400);
 
-header.resume-header {
-  position: relative;
-  text-align: center;
-  margin-bottom: 30px;
-  margin-left: 300px;
-}
+            display: block;
+            width: 80%;
+            padding: 12px;
+            margin: 15px auto;
+            background-color: var(--button-color);
+            color: var(--button-text);
+            border-radius: 50px;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            transition: all var(--transition-timing);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
 
-.header-left {
-  position: relative;
-  text-align: center;
-}
+        .button span {
+            position: relative;
+            z-index: 1;
+            transition: all var(--transition-timing);
+        }
 
-.visitor-counter {
-  position: absolute;
-  top: 0;
-  right: 0;
-  text-align: center;
-  font-size: 14px;
-}
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background-color: var(--button-hover);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all var(--transition-timing);
+        }
 
-.visitor-counter .label {
-  margin-bottom: 6px;
-  font-weight: bold;
-}
+        .button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
 
-.visitor-counter .count {
-  padding: 8px 14px;
-  background: #ffffff;
-  border: 2px solid #0066cc;
-  border-radius: 6px;
-  font-size: 20px;
-  font-weight: bold;
-  min-width: 60px;
-}
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .credit {
+            font-size: 12px;
+            margin-top: 20px;
+            font-weight: 300;
+        }
+
+        #theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        .dark-mode {
+            --bg-gradient: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+            --text-color: #ffffff;
+            --container-bg: rgba(30, 30, 30, 0.8);
+            --button-color: #bb86fc;
+            --button-hover: #3700b3;
+            --button-text: #000000;
+        }
+    </style>
+</head>
+<body>
+    <button id="theme-toggle"><i class="fas fa-moon"></i></button>
+    <div class="container">
+        <div class="avatar">
+            <img src="profile.jpg" alt="Will Garbutt">
+        </div>
+        <h1 id="name">Will Garbutt</h1>
+        <p><a href="mailto:will@will-garbutt.me" style="color: inherit; text-decoration: none;">will@will-garbutt.me</a></p>
+        <div class="social-icons">
+            <a href="mailto:will@will-garbutt.me"><i class="fas fa-envelope"></i></a>
+            <a href="https://www.linkedin.com/in/will-garbutt/"><i class="fab fa-linkedin"></i></a>
+        </div>
+        
+        <a class="button" href="https://resume.will-garbutt.me" target="_blank" rel="noopener noreferrer">
+            <span>Resume</span>
+        </a>
+        
+        <a class="button" href="https://stuffabout.cloud" target="_blank" rel="noopener noreferrer">
+            <span>Blog</span>
+        </a>
+        
+        <a class="button" href="https://github.com/wgarbutt" target="_blank" rel="noopener noreferrer">
+            <span>GitHub</span>
+        </a>
+        
+
+    </div>
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+        const icon = themeToggle.querySelector('i');
+        const container = document.querySelector('.container');
+        
+        function setTheme(isDark) {
+            if (isDark) {
+                body.classList.add('dark-mode');
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                body.classList.remove('dark-mode');
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+            // Add a subtle animation
+            container.style.transition = 'all 0.3s ease';
+            container.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                container.style.transform = 'scale(1)';
+            }, 300);
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            setTheme(!body.classList.contains('dark-mode'));
+        });
+        
+        // Set initial theme based on user preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            setTheme(true);
+        }
+        
+        // Button hover effect
+        document.querySelectorAll('.button').forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px)';
+            });
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+        </script>
+</body>
+</html>

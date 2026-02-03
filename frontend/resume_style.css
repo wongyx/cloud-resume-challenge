@@ -1,0 +1,105 @@
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f5f7fa;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 900px;
+  margin: 40px auto;
+  background: #ffffff;
+  padding: 40px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+header.resume-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+.contact {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.contact a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+section {
+  margin-bottom: 28px;
+}
+
+h2 {
+  border-bottom: 2px solid #0066cc;
+  padding-bottom: 6px;
+  margin-bottom: 16px;
+  font-size: 22px;
+}
+
+.item {
+  margin-bottom: 16px;
+}
+
+.item h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.date {
+  font-size: 13px;
+  color: #666;
+}
+
+ul {
+  padding-left: 20px;
+}
+
+.skills li {
+  list-style-type: square;
+}
+
+header.resume-header {
+  position: relative;
+  text-align: center;
+  margin-bottom: 30px;
+  margin-left: 300px;
+}
+
+.header-left {
+  position: relative;
+  text-align: center;
+}
+
+.visitor-counter {
+  position: absolute;
+  top: 0;
+  right: 0;
+  text-align: center;
+  font-size: 14px;
+}
+
+.visitor-counter .label {
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+.visitor-counter .count {
+  padding: 8px 14px;
+  background: #ffffff;
+  border: 2px solid #0066cc;
+  border-radius: 6px;
+  font-size: 20px;
+  font-weight: bold;
+  min-width: 60px;
+}
