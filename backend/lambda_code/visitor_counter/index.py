@@ -1,4 +1,3 @@
-#importing packages
 import json
 import boto3
 import os
@@ -8,10 +7,14 @@ primary_key = 'id'
 count_value = 'count'
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(table_name)
-#function definition
+allowed_origins = ['https://www.wongyx.com', 'https://test.wongyx.com']
+
 def lambda_handler(event,context):
+    origin = event.get("headers", {}).get("origin")
+    acao = allowed_origins[0]
+    if origin in allowed_origins:
+        acao = origin
     try:
-        #inserting values into table
         response = table.update_item(
         Key={
             primary_key : 'visitor_count'
@@ -31,7 +34,7 @@ def lambda_handler(event,context):
         return {
             'statusCode': 200,
             'headers': {
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': acao,
                 'Access-Control-Allow-Headers': 'Content-Type',
                 'Access-Control-Allow-Methods': 'POST',
                 'Content-Type': 'application/json'
@@ -46,7 +49,7 @@ def lambda_handler(event,context):
         return {
             'statusCode': 500,
             'headers': {
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': acao,
                 'Content-Type': 'application/json'
             },
             'body': json.dumps({
