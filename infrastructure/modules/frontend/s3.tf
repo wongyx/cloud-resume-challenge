@@ -9,7 +9,7 @@ resource "aws_s3_bucket" "resume" {
 }
 
 locals {
-  index_html_content = templatefile("${path.module}/../../../frontend/index.html.tpl", {
+  resume_html_content = templatefile("${path.module}/../../../frontend/resume.html.tpl", {
     api_endpoint = var.api_endpoint
   })
 }
@@ -26,30 +26,6 @@ locals {
     ".gif"  = "image/gif"
     ".svg"  = "image/svg+xml"
     ".ico"  = "image/x-icon"
-  }
-}
-
-resource "aws_s3_object" "index" {
-  bucket       = aws_s3_bucket.resume.id
-  key          = "index.html"
-  content      = local.index_html_content
-  content_type = "text/html"
-  etag         = md5(local.index_html_content)
-
-  lifecycle {
-    ignore_changes = all
-  }
-}
-
-resource "aws_s3_object" "style" {
-  bucket       = aws_s3_bucket.resume.id
-  key          = "style.css"
-  source       = "${path.module}/../../../frontend/style.css"
-  content_type = "text/css"
-  etag         = filemd5("${path.module}/../../../frontend/style.css")
-
-  lifecycle {
-    ignore_changes = all
   }
 }
 
