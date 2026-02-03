@@ -1,254 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Will Garbutt - Links</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --text-color: #333333;
-            --container-bg: rgba(255, 255, 255, 0.8);
-            --button-color: #4e3954;
-            --button-hover: #6e5474;
-            --button-text: #ffffff;
-        }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--bg-gradient);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            transition: all 0.3s ease;
-        }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #89CFF0 0%, #B0E0E6 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
 
-        .avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            overflow: hidden;
-            margin: 0 auto 20px;
-            transition: transform 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
+.container {
+    width: 100%;
+    max-width: 400px;
+}
 
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }        
-        .container {
-            text-align: center;
-            width: 300px;
-            padding: 20px;
-            background: var(--container-bg);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            transition: all 0.3s ease;
-        }
+.card {
+    background: #f5f5f5;
+    border-radius: 20px;
+    padding: 40px 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
 
-        .avatar {
-            width: 100px;
-            height: 100px;
-            background-color: white;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0 auto 20px;
-            overflow: hidden;
-            transition: transform 0.3s ease;
-        }
+.name {
+    font-size: 32px;
+    color: #2c2c2c;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
 
-        .avatar:hover {
-            transform: scale(1.1);
-        }
+.email {
+    color: #666;
+    font-size: 15px;
+    margin-bottom: 20px;
+}
 
-        .avatar-icon {
-            width: 60px;
-            height: 60px;
-            background-color: #8E24AA;
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-        }
+.social-icons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 30px;
+}
 
-        h1 {
-            margin: 10px 0;
-            font-weight: 600;
-        }
+.icon-link {
+    color: #4a4a4a;
+    font-size: 20px;
+    transition: color 0.3s ease;
+    text-decoration: none;
+}
 
-        p {
-            margin: 5px 0;
-            font-weight: 300;
-        }
+.icon-link:hover {
+    color: #000;
+}
 
-        .social-icons {
-            margin: 20px 0;
-        }
+.buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
 
-        .social-icons a {
-            color: var(--text-color);
-            text-decoration: none;
-            margin: 0 10px;
-            font-size: 1.2em;
-            transition: transform 0.3s ease, color 0.3s ease;
-        }
+.btn {
+    background: #5a4a5e;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: block;
+}
 
-        .social-icons a:hover {
-            transform: scale(1.2);
-            color: var(--button-color);
-        }
-
-        .button {
-            --transition-timing: 0.3s cubic-bezier(0.310, -0.105, 0.430, 1.400);
-
-            display: block;
-            width: 80%;
-            padding: 12px;
-            margin: 15px auto;
-            background-color: var(--button-color);
-            color: var(--button-text);
-            border-radius: 50px;
-            text-decoration: none;
-            position: relative;
-            overflow: hidden;
-            transition: all var(--transition-timing);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .button span {
-            position: relative;
-            z-index: 1;
-            transition: all var(--transition-timing);
-        }
-
-        .button::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background-color: var(--button-hover);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: all var(--transition-timing);
-        }
-
-        .button:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-        }
-
-        .credit {
-            font-size: 12px;
-            margin-top: 20px;
-            font-weight: 300;
-        }
-
-        #theme-toggle {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: none;
-            border: none;
-            color: var(--text-color);
-            font-size: 1.5em;
-            cursor: pointer;
-        }
-
-        .dark-mode {
-            --bg-gradient: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
-            --text-color: #ffffff;
-            --container-bg: rgba(30, 30, 30, 0.8);
-            --button-color: #bb86fc;
-            --button-hover: #3700b3;
-            --button-text: #000000;
-        }
-    </style>
-</head>
-<body>
-    <button id="theme-toggle"><i class="fas fa-moon"></i></button>
-    <div class="container">
-        <div class="avatar">
-            <img src="profile.jpg" alt="Will Garbutt">
-        </div>
-        <h1 id="name">Will Garbutt</h1>
-        <p><a href="mailto:will@will-garbutt.me" style="color: inherit; text-decoration: none;">will@will-garbutt.me</a></p>
-        <div class="social-icons">
-            <a href="mailto:will@will-garbutt.me"><i class="fas fa-envelope"></i></a>
-            <a href="https://www.linkedin.com/in/will-garbutt/"><i class="fab fa-linkedin"></i></a>
-        </div>
-        
-        <a class="button" href="https://resume.will-garbutt.me" target="_blank" rel="noopener noreferrer">
-            <span>Resume</span>
-        </a>
-        
-        <a class="button" href="https://stuffabout.cloud" target="_blank" rel="noopener noreferrer">
-            <span>Blog</span>
-        </a>
-        
-        <a class="button" href="https://github.com/wgarbutt" target="_blank" rel="noopener noreferrer">
-            <span>GitHub</span>
-        </a>
-        
-
-    </div>
-
-    <script>
-        // Theme toggle
-        const themeToggle = document.getElementById('theme-toggle');
-        const body = document.body;
-        const icon = themeToggle.querySelector('i');
-        const container = document.querySelector('.container');
-        
-        function setTheme(isDark) {
-            if (isDark) {
-                body.classList.add('dark-mode');
-                icon.classList.remove('fa-moon');
-                icon.classList.add('fa-sun');
-            } else {
-                body.classList.remove('dark-mode');
-                icon.classList.remove('fa-sun');
-                icon.classList.add('fa-moon');
-            }
-            // Add a subtle animation
-            container.style.transition = 'all 0.3s ease';
-            container.style.transform = 'scale(0.98)';
-            setTimeout(() => {
-                container.style.transform = 'scale(1)';
-            }, 300);
-        }
-        
-        themeToggle.addEventListener('click', () => {
-            setTheme(!body.classList.contains('dark-mode'));
-        });
-        
-        // Set initial theme based on user preference
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            setTheme(true);
-        }
-        
-        // Button hover effect
-        document.querySelectorAll('.button').forEach(button => {
-            button.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-3px)';
-            });
-            button.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-            });
-        });
-        </script>
-</body>
-</html>
+.btn:hover {
+    background: #4a3a4e;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
