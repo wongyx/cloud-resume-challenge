@@ -8,6 +8,10 @@ resource "aws_s3_bucket" "resume" {
   }
 }
 
+resource "aws_s3_bucket" "test" {
+  bucket = "test_bucket_wyx_crc"
+}
+
 locals {
   resume_html_content = templatefile("${path.module}/../../../frontend/resume.html.tpl", {
     api_endpoint = var.api_endpoint
