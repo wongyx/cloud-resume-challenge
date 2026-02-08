@@ -130,8 +130,8 @@ resource "aws_iam_policy" "github_actions" {
           "s3:GetObjectVersion"
         ]
         Resource = [
-          "arn:aws:s3:::*-cloud-resume-*",
-          "arn:aws:s3:::*-cloud-resume-*/*"
+          "arn:aws:s3:::*-cloud-resume*",
+          "arn:aws:s3:::*-cloud-resume*/*"
         ]
       },
       
