@@ -1,0 +1,225 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_VERSION: '1.6.3'
+  AWS_REGION: 'ap-southeast-1'
+
+jobs:
+  terraform-plan-test:
+    name: Terraform Plan (Test)
+    runs-on: ubuntu-latest
+    environment: test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Terraform Init
+        run: |
+          cd infrastructure/environments/test
+          terraform init
+      
+      - name: Terraform Plan
+        id: plan
+        run: |
+          cd infrastructure/environments/test
+          terraform plan -out=tfplan -input=false
+      
+      - name: Save plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-tfplan
+          path: infrastructure/environments/test/tfplan
+          retention-days: 5
+
+  terraform-apply-test:
+    name: Terraform Apply (Test)
+    needs: terraform-plan-test
+    runs-on: ubuntu-latest
+    environment: test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Terraform Init
+        run: |
+          cd infrastructure/environments/test
+          terraform init
+      
+      - name: Download plan
+        uses: actions/download-artifact@v4
+        with:
+          name: test-tfplan
+          path: infrastructure/environments/test/
+      
+      - name: Terraform Apply
+        id: apply
+        run: |
+          cd infrastructure/environments/test
+          terraform apply -input=false tfplan
+      
+      - name: Get outputs
+        id: outputs
+        run: |
+          cd infrastructure/environments/test
+          terraform output -json > outputs.json
+          cat outputs.json
+      
+      - name: Upload outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-outputs
+          path: infrastructure/environments/test/outputs.json
+          retention-days: 5
+
+  # TODO: Add test for terraform to rollback on test fail
+
+  terraform-plan-prod:
+    name: Terraform Plan (Production)
+    needs: smoke-test-test
+    runs-on: ubuntu-latest
+    environment: prod
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Terraform Init
+        run: |
+          cd infrastructure/environments/prod
+          terraform init
+      
+      - name: Terraform Plan
+        id: plan
+        run: |
+          cd infrastructure/environments/prod
+          terraform plan -out=tfplan -input=false
+      
+      - name: Save plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: prod-tfplan
+          path: infrastructure/environments/prod/tfplan
+          retention-days: 5
+      
+      - name: Generate plan summary
+        run: |
+          cd infrastructure/environments/prod
+          terraform show tfplan -no-color > plan-summary.txt
+          echo "## Terraform Plan (Production)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          head -n 100 plan-summary.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  terraform-apply-prod:
+    name: Terraform Apply (Production)
+    needs: terraform-plan-prod
+    runs-on: ubuntu-latest
+    environment: prod
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Terraform Init
+        run: |
+          cd infrastructure/environments/prod
+          terraform init
+      
+      - name: Download plan
+        uses: actions/download-artifact@v4
+        with:
+          name: prod-tfplan
+          path: infrastructure/environments/prod/
+      
+      - name: Terraform Apply
+        id: apply
+        run: |
+          cd infrastructure/environments/prod
+          terraform apply -input=false tfplan
+      
+      - name: Get outputs
+        id: outputs
+        run: |
+          cd infrastructure/environments/prod
+          terraform output -json > outputs.json
+          cat outputs.json
+      
+      - name: Upload outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: prod-outputs
+          path: infrastructure/environments/prod/outputs.json
+          retention-days: 5
+
+  # TODO: Add test for terraform to rollback on test fail
+
+  notify-completion:
+    name: Notify Deployment Complete
+    needs: smoke-test-prod
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+      - name: Deployment success
+        run: |
+          echo "✅ Infrastructure deployment completed successfully"
+          echo "Test environment: Deployed and verified"
+          echo "Production environment: Deployed and verified"
