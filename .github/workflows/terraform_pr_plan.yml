@@ -15,17 +15,12 @@ permissions:
 env:
   TF_VERSION: '1.6.3'
   AWS_REGION: 'ap-southeast-1'
-
+  ENVIRONMENT: 'test'
 jobs:
   terraform-pr-plan:
     name: Terraform Plan on PR
     runs-on: ubuntu-latest
-    environment : ${{ matrix.environment }}
-    
-    strategy:
-      matrix:
-        environment: [test, prod]
-    
+    environment: test
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -45,13 +40,13 @@ jobs:
       - name: Terraform Init
         id: init
         run: |
-          cd infrastructure/environments/${{ matrix.environment }}
+          cd infrastructure/environments/${{ env.ENVIRONMENT }}
           terraform init
       
       - name: Terraform Plan
         id: plan
         run: |
-          cd infrastructure/environments/${{ matrix.environment }}
+          cd infrastructure/environments/${{ env.ENVIRONMENT }}
           terraform plan -no-color -input=false
         continue-on-error: true
       
@@ -61,11 +56,10 @@ jobs:
           PLAN: ${{ steps.plan.outputs.stdout }}
         with:
           script: |
-            const output = `### Terraform Plan Results - \`${{ matrix.environment }}\` Environment
-            
+            const output = `### Terraform Plan Results - \`${{ env.ENVIRONMENT }}\` Environment
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-            
+
             <details><summary>Show Plan</summary>
             
             \`\`\`terraform
@@ -85,7 +79,7 @@ jobs:
             
             const botComment = comments.find(comment => {
               return comment.user.type === 'Bot' && 
-                     comment.body.includes(`Terraform Plan Results - \`${{ matrix.environment }}\` Environment`)
+                     comment.body.includes(`Terraform Plan Results - \`${{ env.ENVIRONMENT }}\` Environment`)
             });
             
             if (botComment) {
@@ -107,7 +101,7 @@ jobs:
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
-
+  
   security-scan:
     name: Security Scan (tfsec)
     runs-on: ubuntu-latest
