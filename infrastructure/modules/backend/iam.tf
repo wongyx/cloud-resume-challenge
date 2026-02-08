@@ -100,7 +100,7 @@ resource "aws_iam_policy" "github_actions" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      # S3 - Bucket and object management
+      # S3 - Bucket-level operations
       {
         Effect = "Allow"
         Action = [
@@ -123,16 +123,22 @@ resource "aws_iam_policy" "github_actions" {
           "s3:GetBucketTagging",
           "s3:PutBucketTagging",
           "s3:GetEncryptionConfiguration",
-          "s3:PutEncryptionConfiguration",
+          "s3:PutEncryptionConfiguration"
+        ]
+        Resource = "arn:aws:s3:::*cloud-resume*" 
+      },
+      
+      # S3 - Object-level operations
+      {
+        Effect = "Allow"
+        Action = [
           "s3:PutObject",
           "s3:GetObject",
           "s3:DeleteObject",
-          "s3:GetObjectVersion"
+          "s3:GetObjectVersion",
+          "s3:PutObjectAcl"
         ]
-        Resource = [
-          "arn:aws:s3:::*-cloud-resume*",
-          "arn:aws:s3:::*-cloud-resume*/*"
-        ]
+        Resource = "arn:aws:s3:::*cloud-resume*/*"
       },
       
       # Lambda - Full lifecycle management
