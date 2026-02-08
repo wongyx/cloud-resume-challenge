@@ -74,6 +74,7 @@ module "backend" {
   environment          = var.environment
   project_name         = var.project_name
   aws_region          = var.aws_region
+  aws_account_id      = var.aws_account_id
   domain_name = var.domain_name
   github_repo_name = var.github_repo_name
   s3_bucket_arn = module.frontend.bucket_arn
