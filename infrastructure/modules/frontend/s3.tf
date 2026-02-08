@@ -9,7 +9,7 @@ resource "aws_s3_bucket" "resume" {
 }
 
 resource "aws_s3_bucket" "test" {
-  bucket = "test-cloud-resume-wyx"
+  bucket = "test-cloud-resume-wyx1"
 }
 
 locals {
