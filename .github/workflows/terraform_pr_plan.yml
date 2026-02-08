@@ -54,7 +54,7 @@ jobs:
           TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID }}
           TF_VAR_cloudflare_api_token_ssm_path: ${{ vars.SSM_PATH }}
           TF_VAR_bucket_name: ${{ vars.S3_BUCKET_NAME }}
-          TF_VAR_aws_region: "ap-southeast-1"
+          TF_VAR_aws_region: "${{ vars.AWS_REGION}}
           TF_VAR_project_name: ${{ vars.PROJECT_NAME }}
           TF_VAR_environment: ${{ env.ENVIRONMENT }}
           TF_VAR_dns_record_name: ${{ vars.DNS_RECORD_NAME }}
