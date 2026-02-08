@@ -4,11 +4,6 @@ variable "aws_region" {
   default     = "ap-southeast-1"
 }
 
-variable "aws_account_id" {
-  description = "AWS account ID"
-  type        = string
-}
-
 variable "bucket_name" {
   description = "Name of the S3 bucket"
   type        = string
