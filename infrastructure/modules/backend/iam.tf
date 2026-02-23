@@ -273,7 +273,8 @@ resource "aws_iam_policy" "github_actions" {
      {
        Effect = "Allow"
        Action = [
-         "logs:DescribeLogGroups"
+         "logs:DescribeLogGroups",
+         "logs:ListTagsForResource"
        ]
        Resource = "*"
      },
@@ -285,7 +286,9 @@ resource "aws_iam_policy" "github_actions" {
        Action = [
          "iam:GetRole",
          "iam:GetPolicy",
-         "iam:GetOpenIDConnectProvider"
+         "iam:GetPolicyVersion",
+         "iam:GetOpenIDConnectProvider",
+         "iam:ListRolePolicies"
        ]
        Resource = "*"
      }
