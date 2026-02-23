@@ -133,7 +133,8 @@ resource "aws_iam_policy" "github_actions" {
          "s3:PutBucketTagging",
          "s3:GetEncryptionConfiguration",
          "s3:PutEncryptionConfiguration",
-         "s3:GetBucketAcl"
+         "s3:GetBucketAcl",
+         "s3:GetAccelerateConfiguration"
        ]
        Resource = "arn:aws:s3:::*cloud-resume*"
      },
