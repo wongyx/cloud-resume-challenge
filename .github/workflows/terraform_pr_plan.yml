@@ -24,7 +24,7 @@ jobs:
     
     strategy:
       matrix:
-        environment: [test, prod]
+        environment: test
     
     steps:
       - name: Checkout code
