@@ -97,126 +97,48 @@ resource "aws_iam_role_policy_attachment" "github_actions_policy" {
 resource "aws_iam_policy" "github_actions" {
   name        = "github-actions-policy"
   description = "Policy for GitHub Actions"
+  
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      # S3 - Bucket-level operations
+      # Allow frontend code to be uploaded to S3
       {
         Effect = "Allow"
         Action = [
-          "s3:CreateBucket",
-          "s3:DeleteBucket",
           "s3:ListBucket",
-          "s3:GetBucketLocation",
-          "s3:GetBucketVersioning",
-          "s3:PutBucketVersioning",
-          "s3:GetBucketWebsite",
-          "s3:PutBucketWebsite",
-          "s3:DeleteBucketWebsite",
-          "s3:GetBucketPolicy",
-          "s3:PutBucketPolicy",
-          "s3:DeleteBucketPolicy",
-          "s3:GetBucketCORS",
-          "s3:PutBucketCORS",
-          "s3:GetBucketPublicAccessBlock",
-          "s3:PutBucketPublicAccessBlock",
-          "s3:GetBucketTagging",
-          "s3:PutBucketTagging",
-          "s3:GetEncryptionConfiguration",
-          "s3:PutEncryptionConfiguration"
+          "s3:ListBucketVersions"
         ]
-        Resource = "arn:aws:s3:::*cloud-resume*" 
+        Resource = var.s3_bucket_arn
       },
-      
-      # S3 - Object-level operations
       {
         Effect = "Allow"
         Action = [
           "s3:PutObject",
           "s3:GetObject",
-          "s3:DeleteObject",
           "s3:GetObjectVersion",
-          "s3:PutObjectAcl"
+          "s3:DeleteObject"
         ]
-        Resource = "arn:aws:s3:::*cloud-resume*/*"
+        Resource = "${var.s3_bucket_arn}/*"
       },
-      
-      # Lambda - Full lifecycle management
+      # Lambda - Update lambda function code
       {
         Effect = "Allow"
         Action = [
-          "lambda:CreateFunction",
-          "lambda:DeleteFunction",
-          "lambda:GetFunction",
-          "lambda:GetFunctionConfiguration",
-          "lambda:UpdateFunctionCode",
-          "lambda:UpdateFunctionConfiguration",
-          "lambda:PublishVersion",
-          "lambda:ListVersionsByFunction",
-          "lambda:CreateAlias",
-          "lambda:DeleteAlias",
-          "lambda:GetAlias",
-          "lambda:UpdateAlias",
-          "lambda:AddPermission",
-          "lambda:RemovePermission",
-          "lambda:GetPolicy",
-          "lambda:TagResource",
-          "lambda:UntagResource",
-          "lambda:ListTags",
-          "lambda:InvokeFunction"
+        "lambda:UpdateFunctionCode",
+        "lambda:GetFunction",
+        "lambda:GetFunctionConfiguration",
+        "lambda:PublishVersion",
+        "lambda:ListVersionsByFunction",
+        "lambda:GetAlias",
+        "lambda:CreateAlias",
+        "lambda:UpdateAlias",
+        "lambda:InvokeFunction",
+        "lambda:TagResource",
+        "lambda:ListTags"
         ]
-        Resource = "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:*"
+        Resource = aws_lambda_function.visitor_counter.arn
       },
-      
-      # CloudFront - Distribution management
-      {
-        Effect = "Allow"
-        Action = [
-          "cloudfront:CreateDistribution",
-          "cloudfront:GetDistribution",
-          "cloudfront:GetDistributionConfig",
-          "cloudfront:UpdateDistribution",
-          "cloudfront:DeleteDistribution",
-          "cloudfront:CreateInvalidation",
-          "cloudfront:GetInvalidation",
-          "cloudfront:ListInvalidations",
-          "cloudfront:TagResource",
-          "cloudfront:UntagResource",
-          "cloudfront:ListTagsForResource",
-          "cloudfront:CreateCloudFrontOriginAccessIdentity",
-          "cloudfront:GetCloudFrontOriginAccessIdentity",
-          "cloudfront:UpdateCloudFrontOriginAccessIdentity",
-          "cloudfront:DeleteCloudFrontOriginAccessIdentity",
-          "cloudfront:ListCloudFrontOriginAccessIdentities",
-          "cloudfront:ListDistributions"
-        ]
-        Resource = "*"
-      },
-      
-      # DynamoDB - Table management
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:CreateTable",
-          "dynamodb:DeleteTable",
-          "dynamodb:DescribeTable",
-          "dynamodb:UpdateTable",
-          "dynamodb:DescribeTimeToLive",
-          "dynamodb:UpdateTimeToLive",
-          "dynamodb:DescribeContinuousBackups",
-          "dynamodb:UpdateContinuousBackups",
-          "dynamodb:TagResource",
-          "dynamodb:UntagResource",
-          "dynamodb:ListTagsOfResource",
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:UpdateItem",
-          "dynamodb:DeleteItem"
-        ]
-        Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/*"
-      },
-      
-      # API Gateway - REST API management
+      # Allow invalidation of cloudfront
       {
         Effect = "Allow"
         Action = [
@@ -278,6 +200,12 @@ resource "aws_iam_policy" "github_actions" {
         ]
         Resource = "*"
       }
+      "Effect": "Allow",
+      "Action": [
+        "cloudfront:CreateInvalidation"
+      ],
+      "Resource": var.cloudfront_distribution_arn
+    }
     ]
   })
 }
