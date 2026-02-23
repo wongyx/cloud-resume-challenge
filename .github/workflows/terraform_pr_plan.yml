@@ -20,11 +20,7 @@ jobs:
   terraform-pr-plan:
     name: Terraform Plan on PR
     runs-on: ubuntu-latest
-    environment : ${{ matrix.environment }}
-    
-    strategy:
-      matrix:
-        environment: test
+    environment : test
     
     steps:
       - name: Checkout code
