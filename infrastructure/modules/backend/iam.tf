@@ -113,28 +113,7 @@ resource "aws_iam_policy" "github_actions" {
      {
        Effect = "Allow"
        Action = [
-         "s3:CreateBucket",
-         "s3:DeleteBucket",
-         "s3:ListBucket",
-         "s3:GetBucketLocation",
-         "s3:GetBucketVersioning",
-         "s3:PutBucketVersioning",
-         "s3:GetBucketWebsite",
-         "s3:PutBucketWebsite",
-         "s3:DeleteBucketWebsite",
-         "s3:GetBucketPolicy",
-         "s3:PutBucketPolicy",
-         "s3:DeleteBucketPolicy",
-         "s3:GetBucketCORS",
-         "s3:PutBucketCORS",
-         "s3:GetBucketPublicAccessBlock",
-         "s3:PutBucketPublicAccessBlock",
-         "s3:GetBucketTagging",
-         "s3:PutBucketTagging",
-         "s3:GetEncryptionConfiguration",
-         "s3:PutEncryptionConfiguration",
-         "s3:GetBucketAcl",
-         "s3:GetAccelerateConfiguration"
+         "s3:*",
        ]
        Resource = "arn:aws:s3:::*cloud-resume*"
      },
