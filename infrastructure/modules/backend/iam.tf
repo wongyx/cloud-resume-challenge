@@ -135,25 +135,7 @@ resource "aws_iam_policy" "github_actions" {
      {
        Effect = "Allow"
        Action = [
-         "lambda:CreateFunction",
-         "lambda:DeleteFunction",
-         "lambda:GetFunction",
-         "lambda:GetFunctionConfiguration",
-         "lambda:UpdateFunctionCode",
-         "lambda:UpdateFunctionConfiguration",
-         "lambda:PublishVersion",
-         "lambda:ListVersionsByFunction",
-         "lambda:CreateAlias",
-         "lambda:DeleteAlias",
-         "lambda:GetAlias",
-         "lambda:UpdateAlias",
-         "lambda:AddPermission",
-         "lambda:RemovePermission",
-         "lambda:GetPolicy",
-         "lambda:TagResource",
-         "lambda:UntagResource",
-         "lambda:ListTags",
-         "lambda:InvokeFunction"
+         "lambda:*"
        ]
        Resource = "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:*"
      },
@@ -188,21 +170,7 @@ resource "aws_iam_policy" "github_actions" {
      {
        Effect = "Allow"
        Action = [
-         "dynamodb:CreateTable",
-         "dynamodb:DeleteTable",
-         "dynamodb:DescribeTable",
-         "dynamodb:UpdateTable",
-         "dynamodb:DescribeTimeToLive",
-         "dynamodb:UpdateTimeToLive",
-         "dynamodb:DescribeContinuousBackups",
-         "dynamodb:UpdateContinuousBackups",
-         "dynamodb:TagResource",
-         "dynamodb:UntagResource",
-         "dynamodb:ListTagsOfResource",
-         "dynamodb:GetItem",
-         "dynamodb:PutItem",
-         "dynamodb:UpdateItem",
-         "dynamodb:DeleteItem"
+         "dynamodb:*"
        ]
        Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/*"
      },
