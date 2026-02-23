@@ -132,7 +132,8 @@ resource "aws_iam_policy" "github_actions" {
          "s3:GetBucketTagging",
          "s3:PutBucketTagging",
          "s3:GetEncryptionConfiguration",
-         "s3:PutEncryptionConfiguration"
+         "s3:PutEncryptionConfiguration",
+         "s3:GetBucketAcl"
        ]
        Resource = "arn:aws:s3:::*cloud-resume*"
      },
@@ -197,7 +198,8 @@ resource "aws_iam_policy" "github_actions" {
          "cloudfront:UpdateCloudFrontOriginAccessIdentity",
          "cloudfront:DeleteCloudFrontOriginAccessIdentity",
          "cloudfront:ListCloudFrontOriginAccessIdentities",
-         "cloudfront:ListDistributions"
+         "cloudfront:ListDistributions",
+         "cloudfront:GetOriginAccessControl"
        ]
        Resource = "*"
      },
