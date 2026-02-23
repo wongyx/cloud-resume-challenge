@@ -227,8 +227,8 @@ resource "aws_iam_policy" "github_actions" {
           "apigateway:DELETE"
         ]
         Resource = [
-          "arn:aws:apigateway:${var.aws_region}::/restapis",
-          "arn:aws:apigateway:${var.aws_region}::/restapis/*"
+          "arn:aws:apigateway:${var.aws_region}::/apis",
+          "arn:aws:apigateway:${var.aws_region}::/apis/*"
         ]
       },
       
@@ -257,6 +257,26 @@ resource "aws_iam_policy" "github_actions" {
           "ssm:DescribeParameters"
         ]
         Resource = "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/*"
+      },
+
+      # CloudWatch
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:DescribeLogGroups"
+        ]
+        Resource = "*"
+      },
+
+      # IAM Read Only
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:GetRole",
+          "iam:GetPolicy",
+          "iam:GetOpenIDConnectProvider"
+        ]
+        Resource = "*"
       }
     ]
   })
