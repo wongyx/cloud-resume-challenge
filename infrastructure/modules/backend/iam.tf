@@ -288,7 +288,8 @@ resource "aws_iam_policy" "github_actions" {
          "iam:GetPolicy",
          "iam:GetPolicyVersion",
          "iam:GetOpenIDConnectProvider",
-         "iam:ListRolePolicies"
+         "iam:ListRolePolicies",
+         "iam:ListAttachedRolePolicies"
        ]
        Resource = "*"
      }
