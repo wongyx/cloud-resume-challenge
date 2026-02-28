@@ -63,8 +63,7 @@ jobs:
       
       - name: Update Pull Request
         uses: actions/github-script@v7
-        env:
-          PLAN: ${{ steps.plan.outputs.stdout }}
+        if: always()
         with:
           script: |
             const fs = require('fs');
@@ -84,7 +83,7 @@ jobs:
             <details><summary>Show Plan</summary>
             
             \`\`\`terraform
-            ${process.env.PLAN}
+            ${planOutput}
             \`\`\`
             
             </details>
@@ -104,14 +103,14 @@ jobs:
             });
             
             if (botComment) {
-              github.rest.issues.updateComment({
+              await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: botComment.id,
                 body: output
               });
             } else {
-              github.rest.issues.createComment({
+              await github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
