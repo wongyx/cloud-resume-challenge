@@ -178,8 +178,8 @@ jobs:
             exit 0
           fi
 
-          if [[ "${{ needs.codeql.result }}" == "success" && \
-                "${{ needs.tfsec.result }}" == "success" ]]; then
+          if [[ "${{ needs.analyze-code.result }}" == "success" && \
+                "${{ needs.security-scan.result }}" == "success" ]]; then
             echo "SAST passed."
             exit 0
           fi
