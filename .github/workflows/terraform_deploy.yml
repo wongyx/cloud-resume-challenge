@@ -21,6 +21,8 @@ jobs:
     name: Terraform Plan (Test)
     runs-on: ubuntu-latest
     environment: test
+    env:
+      ENVIRONMENT: 'test'
     
     steps:
       - name: Checkout code
@@ -123,6 +125,8 @@ jobs:
     needs: terraform-apply-test
     runs-on: ubuntu-latest
     environment: prod
+    env:
+      ENVIRONMENT: 'prod'
     
     steps:
       - name: Checkout code
