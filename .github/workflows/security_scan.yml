@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ main ]
   schedule:
-    - cron: '0 2 * * 1'
+    - cron: '0 0 1 * *' # Scan on every first day of each month
 
 jobs:
   analyze-code:
@@ -57,11 +57,14 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         working_directory: infrastructure/
         soft_fail_commenter: false
+        tfsec_args: --config-file=.tfsec/config.yml
 
     - name: Run tfsec Security Check
       run: |
         curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
-        tfsec infrastructure/ --minimum-severity HIGH
+        tfsec infrastructure/ \
+          --minimum-severity HIGH \
+          --config-file .tfsec/config.yml
 
   check-high-severity:
     name: Check for High Severity Issues

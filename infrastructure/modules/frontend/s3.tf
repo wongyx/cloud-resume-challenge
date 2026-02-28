@@ -71,6 +71,16 @@ resource "aws_s3_bucket_public_access_block" "resume" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_server_side_encryption_configuration" "resume" {
+  bucket = aws_s3_bucket.resume.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
 resource "aws_s3_bucket_policy" "resume" {
   bucket = aws_s3_bucket.resume.id
 
@@ -99,14 +109,4 @@ resource "aws_s3_bucket_policy" "resume" {
     aws_s3_bucket_public_access_block.resume,
     aws_cloudfront_distribution.resume
   ]
-}
-
-resource "aws_s3_bucket" "test" {
-  bucket = "wyx-cloud-resume-test-bucket-${var.environment}"
-  force_destroy = var.environment == "test" ? true : false
-
-  tags = {
-    Name        = "test"
-    Environment = var.environment
-  }
 }
