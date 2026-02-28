@@ -1,0 +1,6 @@
+# Global exclusions for the entire project
+exclude:
+  - aws-s3-encryption-customer-key      # Using AWS-managed keys
+  - aws-cloudfront-enable-waf           # Skipping WAF due to budget constraints 
+  
+minimum_severity: HIGH

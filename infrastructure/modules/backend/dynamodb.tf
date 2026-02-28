@@ -8,6 +8,11 @@ resource "aws_dynamodb_table" "visitor_counter" {
     type = "S"  # S = String
   }
 
+  server_side_encryption {
+    enabled = true
+    kms_key_arn = null  # Uses AWS-managed key
+  }
+
   tags = merge(
     var.common_tags,
     {
