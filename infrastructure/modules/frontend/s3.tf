@@ -100,3 +100,13 @@ resource "aws_s3_bucket_policy" "resume" {
     aws_cloudfront_distribution.resume
   ]
 }
+
+resource "aws_s3_bucket" "test" {
+  bucket = "wyx-cloud-resume-test-bucket"
+  force_destroy = var.environment == "test" ? true : false
+
+  tags = {
+    Name        = "test"
+    Environment = var.environment
+  }
+}
