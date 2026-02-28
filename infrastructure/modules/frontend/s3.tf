@@ -102,7 +102,7 @@ resource "aws_s3_bucket_policy" "resume" {
 }
 
 resource "aws_s3_bucket" "test" {
-  bucket = "wyx-cloud-resume-test-bucket"
+  bucket = "wyx-cloud-resume-test-bucket-${var.environment}"
   force_destroy = var.environment == "test" ? true : false
 
   tags = {
