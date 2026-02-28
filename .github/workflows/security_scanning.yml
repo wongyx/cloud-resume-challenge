@@ -1,0 +1,176 @@
+name: "Security Scan - CodeQL & tfsec"
+
+on:
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly scan on Monday at 2 AM
+    
+
+jobs:
+  analyze-code:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+      pull-requests: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript', 'python' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        queries: security-extended
+        paths:
+          - 'frontend/'
+          - 'backend/'
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
+        upload: true
+
+  security-scan:
+    name: Security Scan (tfsec)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      security-events: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run tfsec PR Commenter
+      uses: aquasecurity/tfsec-pr-commenter-action@v1.3.1
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        working_directory: infrastructure/
+        soft_fail_commenter: false
+
+    - name: Run tfsec with SARIF output
+      uses: aquasecurity/tfsec-action@v1.0.3
+      with:
+        working_directory: infrastructure/
+        soft_fail: false
+        format: sarif
+        additional_args: --minimum-severity HIGH
+
+    - name: Upload tfsec SARIF to GitHub Security
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: results.sarif
+        category: tfsec
+
+  check-high-severity:
+    name: Check for High Severity Issues
+    needs: [analyze-code, security-scan]
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: read
+      pull-requests: write
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Check Security Results
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const ref = context.payload.pull_request.head.ref;
+          
+          // Check CodeQL alerts
+          const codeqlAlerts = await github.rest.codeScanning.listAlertsForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            ref: `refs/heads/${ref}`,
+            severity: 'high,critical',
+            tool_name: 'CodeQL'
+          });
+
+          // Check tfsec alerts
+          const tfsecAlerts = await github.rest.codeScanning.listAlertsForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            ref: `refs/heads/${ref}`,
+            severity: 'high,critical',
+            tool_name: 'tfsec'
+          });
+
+          const codeqlCount = codeqlAlerts.data.length;
+          const tfsecCount = tfsecAlerts.data.length;
+          const totalAlerts = codeqlCount + tfsecCount;
+
+          if (totalAlerts > 0) {
+            let message = `## 🚨 Security Scan Failed - High/Critical Issues Found\n\n`;
+            message += `**Total Issues**: ${totalAlerts} (CodeQL: ${codeqlCount}, tfsec: ${tfsecCount})\n\n`;
+
+            if (codeqlCount > 0) {
+              message += `### 🔍 CodeQL Issues (${codeqlCount}):\n\n`;
+              codeqlAlerts.data.slice(0, 10).forEach(alert => {
+                message += `- **${alert.rule.severity.toUpperCase()}**: ${alert.rule.description}\n`;
+                message += `  📍 \`${alert.most_recent_instance.location.path}:${alert.most_recent_instance.location.start_line}\`\n`;
+                message += `  🔗 [View Details](${alert.html_url})\n\n`;
+              });
+              if (codeqlCount > 10) {
+                message += `_... and ${codeqlCount - 10} more issue(s)_\n\n`;
+              }
+            }
+
+            if (tfsecCount > 0) {
+              message += `### 🔒 tfsec Issues (${tfsecCount}):\n\n`;
+              tfsecAlerts.data.slice(0, 10).forEach(alert => {
+                message += `- **${alert.rule.severity.toUpperCase()}**: ${alert.rule.description}\n`;
+                message += `  📍 \`${alert.most_recent_instance.location.path}:${alert.most_recent_instance.location.start_line}\`\n`;
+                message += `  🔗 [View Details](${alert.html_url})\n\n`;
+              });
+              if (tfsecCount > 10) {
+                message += `_... and ${tfsecCount - 10} more issue(s)_\n\n`;
+              }
+              message += `ℹ️ _Detailed tfsec comments have been added to the specific lines in your PR._\n\n`;
+            }
+
+            message += `---\n`;
+            message += `❌ **This PR cannot be merged until all HIGH and CRITICAL severity issues are resolved.**\n\n`;
+            message += `View all findings in the [Security tab](${context.payload.repository.html_url}/security/code-scanning).`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: message
+            });
+
+            core.setFailed(`❌ Security scan failed: ${totalAlerts} high/critical severity issue(s) found.`);
+          } else {
+            const message = `## ✅ Security Scan Passed\n\n` +
+              `No high or critical severity security issues detected.\n\n` +
+              `- CodeQL: ✓ Passed\n` +
+              `- tfsec: ✓ Passed`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: message
+            });
+            
+            console.log('✅ No high or critical severity issues found.');
+          }

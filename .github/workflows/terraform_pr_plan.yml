@@ -121,18 +121,3 @@ jobs:
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
-  
-  security-scan:
-    name: Security Scan (tfsec)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Run tfsec
-        uses: aquasecurity/tfsec-pr-commenter-action@v1.3.1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          working_directory: infrastructure/
-          soft_fail_commenter: true
