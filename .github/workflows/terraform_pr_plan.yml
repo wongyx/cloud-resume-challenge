@@ -59,7 +59,6 @@ jobs:
           TF_VAR_environment: ${{ env.ENVIRONMENT }}
           TF_VAR_dns_record_name: ${{ vars.DNS_RECORD_NAME }}
           TF_VAR_github_repo_name: ${{ vars.REPO_NAME }}
-          continue-on-error: true
       
       - name: Update Pull Request
         uses: actions/github-script@v7

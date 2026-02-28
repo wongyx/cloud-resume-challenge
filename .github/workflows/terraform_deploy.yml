@@ -47,6 +47,17 @@ jobs:
         run: |
           cd infrastructure/environments/test
           terraform plan -out=tfplan -input=false
+        env:
+          TF_VAR_aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+          TF_VAR_domain_name: ${{ vars.DOMAIN_NAME }}
+          TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID }}
+          TF_VAR_cloudflare_api_token_ssm_path: ${{ vars.SSM_PATH }}
+          TF_VAR_bucket_name: ${{ vars.S3_BUCKET_NAME }}
+          TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+          TF_VAR_project_name: ${{ vars.PROJECT_NAME }}
+          TF_VAR_environment: ${{ env.ENVIRONMENT }}
+          TF_VAR_dns_record_name: ${{ vars.DNS_RECORD_NAME }}
+          TF_VAR_github_repo_name: ${{ vars.REPO_NAME }}
       
       - name: Save plan
         uses: actions/upload-artifact@v4
@@ -107,11 +118,9 @@ jobs:
           path: infrastructure/environments/test/outputs.json
           retention-days: 5
 
-  # TODO: Add test for terraform to rollback on test fail
-
   terraform-plan-prod:
     name: Terraform Plan (Production)
-    needs: smoke-test-test
+    needs: terraform-apply-test
     runs-on: ubuntu-latest
     environment: prod
     
@@ -140,6 +149,17 @@ jobs:
         run: |
           cd infrastructure/environments/prod
           terraform plan -out=tfplan -input=false
+        env:
+          TF_VAR_aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+          TF_VAR_domain_name: ${{ vars.DOMAIN_NAME }}
+          TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID }}
+          TF_VAR_cloudflare_api_token_ssm_path: ${{ vars.SSM_PATH }}
+          TF_VAR_bucket_name: ${{ vars.S3_BUCKET_NAME }}
+          TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+          TF_VAR_project_name: ${{ vars.PROJECT_NAME }}
+          TF_VAR_environment: ${{ env.ENVIRONMENT }}
+          TF_VAR_dns_record_name: ${{ vars.DNS_RECORD_NAME }}
+          TF_VAR_github_repo_name: ${{ vars.REPO_NAME }}
       
       - name: Save plan
         uses: actions/upload-artifact@v4
@@ -209,11 +229,9 @@ jobs:
           path: infrastructure/environments/prod/outputs.json
           retention-days: 5
 
-  # TODO: Add test for terraform to rollback on test fail
-
   notify-completion:
     name: Notify Deployment Complete
-    needs: smoke-test-prod
+    needs: terraform-apply-prod
     runs-on: ubuntu-latest
     if: success()
     
@@ -221,5 +239,3 @@ jobs:
       - name: Deployment success
         run: |
           echo "✅ Infrastructure deployment completed successfully"
-          echo "Test environment: Deployed and verified"
-          echo "Production environment: Deployed and verified"
