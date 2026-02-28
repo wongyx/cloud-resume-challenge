@@ -32,8 +32,8 @@ jobs:
 
   analyze-code:
     name: CodeQL Analysis
-    needs: changes
-    if: needs.changes.outputs.code == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: detect-changes
+    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -67,8 +67,8 @@ jobs:
 
   security-scan:
     name: Security Scan (tfsec)
-    needs: changes
-    if: needs.changes.outputs.code == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: detect-changes
+    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -173,7 +173,7 @@ jobs:
     steps:
       - name: Evaluate security gate
         run: |
-          if [[ "${{ needs.changes.outputs.sast_required }}" == "false" ]]; then
+          if [[ "${{ needs.detect-changes.outputs.sast_required }}" == "false" ]]; then
             echo "No relevant code changes — skipping SAST."
             exit 0
           fi
