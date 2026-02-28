@@ -60,11 +60,11 @@ jobs:
         tfsec_args: --config-file=.tfsec/config.yml
 
     - name: Run tfsec Security Check
-      run: |
-        curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
-        tfsec infrastructure/ \
-          --minimum-severity HIGH \
-          --config-file .tfsec/config.yml
+      uses: aquasecurity/tfsec-action@v1.0.3
+      with:
+        working_directory: infrastructure/
+        soft_fail: false
+        additional_args: --minimum-severity HIGH --config-file .tfsec/config.yml
 
   check-high-severity:
     name: Check for High Severity Issues
