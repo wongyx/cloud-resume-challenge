@@ -3,6 +3,18 @@ name: "Security Scan - CodeQL & tfsec"
 on:
   pull_request:
     branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - 'infrastructure/**'
+      - 'tests/**'
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - 'infrastructure/**'
+      - 'tests/**'
   schedule:
     - cron: '0 0 1 * *' # Scan on every first day of each month
   workflow_dispatch:
