@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ main ]
   schedule:
-    - cron: '0 2 * * 1'  # Weekly scan on Monday at 2 AM
+    - cron: '0 0 * * 1'  # Weekly scan on Monday at 12 AM
     
 
 jobs:
@@ -31,9 +31,6 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         queries: security-extended
-        paths:
-          - 'frontend/'
-          - 'backend/'
 
     - name: Autobuild
       uses: github/codeql-action/autobuild@v3
@@ -61,7 +58,7 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         working_directory: infrastructure/
-        soft_fail_commenter: false
+        soft_fail_commenter: false 
 
     - name: Run tfsec with SARIF output
       uses: aquasecurity/tfsec-action@v1.0.3
