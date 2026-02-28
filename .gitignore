@@ -3,6 +3,7 @@
 *.tfstate
 *.tfstate.*
 .terraform.lock.hcl
+backend.hcl
 
 # File for setup reference
 reference-configs/
