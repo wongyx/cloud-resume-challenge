@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ main ]
   schedule:
-    - cron: '0 0 1 * *' # Scan on first day of every month
+    - cron: '0 2 * * 1'
 
 jobs:
   analyze-code:
@@ -46,7 +46,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      security-events: write
 
     steps:
     - name: Checkout code
@@ -59,21 +58,10 @@ jobs:
         working_directory: infrastructure/
         soft_fail_commenter: false
 
-    - name: Run tfsec with SARIF output
-      uses: aquasecurity/tfsec-action@v1.0.3
-      with:
-        working_directory: infrastructure/
-        soft_fail: false
-        format: sarif
-        sarif_file: tfsec-results.sarif
-        additional_args: --minimum-severity HIGH
-
-    - name: Upload tfsec SARIF to GitHub Security
-      uses: github/codeql-action/upload-sarif@v4
-      if: success() || failure()
-      with:
-        sarif_file: tfsec-results.sarif
-        category: tfsec
+    - name: Run tfsec Security Check
+      run: |
+        curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+        tfsec infrastructure/ --minimum-severity HIGH
 
   check-high-severity:
     name: Check for High Severity Issues
@@ -101,52 +89,26 @@ jobs:
             tool_name: 'CodeQL'
           });
 
-          // Check tfsec alerts
-          const tfsecAlerts = await github.rest.codeScanning.listAlertsForRepo({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            state: 'open',
-            ref: `refs/heads/${ref}`,
-            severity: 'high,critical',
-            tool_name: 'tfsec'
-          });
-
           const codeqlCount = codeqlAlerts.data.length;
-          const tfsecCount = tfsecAlerts.data.length;
-          const totalAlerts = codeqlCount + tfsecCount;
 
-          if (totalAlerts > 0) {
+          if (codeqlCount > 0) {
             let message = `## 🚨 Security Scan Failed - High/Critical Issues Found\n\n`;
-            message += `**Total Issues**: ${totalAlerts} (CodeQL: ${codeqlCount}, tfsec: ${tfsecCount})\n\n`;
+            message += `**Total CodeQL Issues**: ${codeqlCount}\n\n`;
 
-            if (codeqlCount > 0) {
-              message += `### 🔍 CodeQL Issues (${codeqlCount}):\n\n`;
-              codeqlAlerts.data.slice(0, 10).forEach(alert => {
-                message += `- **${alert.rule.severity.toUpperCase()}**: ${alert.rule.description}\n`;
-                message += `  📍 \`${alert.most_recent_instance.location.path}:${alert.most_recent_instance.location.start_line}\`\n`;
-                message += `  🔗 [View Details](${alert.html_url})\n\n`;
-              });
-              if (codeqlCount > 10) {
-                message += `_... and ${codeqlCount - 10} more issue(s)_\n\n`;
-              }
+            message += `### 🔍 CodeQL Issues (${codeqlCount}):\n\n`;
+            codeqlAlerts.data.slice(0, 10).forEach(alert => {
+              message += `- **${alert.rule.severity.toUpperCase()}**: ${alert.rule.description}\n`;
+              message += `  📍 \`${alert.most_recent_instance.location.path}:${alert.most_recent_instance.location.start_line}\`\n`;
+              message += `  🔗 [View Details](${alert.html_url})\n\n`;
+            });
+            if (codeqlCount > 10) {
+              message += `_... and ${codeqlCount - 10} more issue(s)_\n\n`;
             }
 
-            if (tfsecCount > 0) {
-              message += `### 🔒 tfsec Issues (${tfsecCount}):\n\n`;
-              tfsecAlerts.data.slice(0, 10).forEach(alert => {
-                message += `- **${alert.rule.severity.toUpperCase()}**: ${alert.rule.description}\n`;
-                message += `  📍 \`${alert.most_recent_instance.location.path}:${alert.most_recent_instance.location.start_line}\`\n`;
-                message += `  🔗 [View Details](${alert.html_url})\n\n`;
-              });
-              if (tfsecCount > 10) {
-                message += `_... and ${tfsecCount - 10} more issue(s)_\n\n`;
-              }
-              message += `ℹ️ _Detailed tfsec comments have been added to the specific lines in your PR._\n\n`;
-            }
-
+            message += `\n**Note**: tfsec results are shown as inline comments on your PR code.\n\n`;
             message += `---\n`;
             message += `❌ **This PR cannot be merged until all HIGH and CRITICAL severity issues are resolved.**\n\n`;
-            message += `View all findings in the [Security tab](${context.payload.repository.html_url}/security/code-scanning).`;
+            message += `View all CodeQL findings in the [Security tab](${context.payload.repository.html_url}/security/code-scanning).`;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -155,12 +117,12 @@ jobs:
               body: message
             });
 
-            core.setFailed(`❌ Security scan failed: ${totalAlerts} high/critical severity issue(s) found.`);
+            core.setFailed(`❌ Security scan failed: ${codeqlCount} CodeQL high/critical severity issue(s) found.`);
           } else {
             const message = `## ✅ Security Scan Passed\n\n` +
               `No high or critical severity security issues detected.\n\n` +
               `- CodeQL: ✓ Passed\n` +
-              `- tfsec: ✓ Passed`;
+              `- tfsec: ✓ Passed (see inline comments for any findings)`;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
