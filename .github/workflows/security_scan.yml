@@ -166,7 +166,7 @@ jobs:
 
 
   security-summary:
-    name: Skip SAST to when unimportant changes are made
+    name: SAST scanning
     needs: [detect-changes, analyze-code, security-scan]
     if: always()
     runs-on: ubuntu-latest
