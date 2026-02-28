@@ -45,9 +45,10 @@ jobs:
       
       - name: Terraform Plan
         id: plan
+        continue-on-error: true
         run: |
           cd infrastructure/environments/${{ env.ENVIRONMENT }}
-          terraform plan -no-color -input=false
+          terraform plan -out=tfplan -no-color -input=false 2>&1 | tee plan_output.txt
         env:
           TF_VAR_aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
           TF_VAR_domain_name: ${{ vars.DOMAIN_NAME }}
@@ -62,10 +63,19 @@ jobs:
       
       - name: Update Pull Request
         uses: actions/github-script@v7
-        env:
-          PLAN: ${{ steps.plan.outputs.stdout }}
+        if: always()
         with:
           script: |
+            const fs = require('fs');
+            let planOutput = '';
+      
+            try {
+              planOutput = fs.readFileSync('infrastructure/environments/${{ env.ENVIRONMENT }}/plan_output.txt', 'utf8');
+            } catch (error) {
+              planOutput = 'Unable to read plan output file';
+              console.error('Error reading plan output:', error);
+            }
+
             const output = `### Terraform Plan Results - \`${{ env.ENVIRONMENT }}\` Environment
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
@@ -73,7 +83,7 @@ jobs:
             <details><summary>Show Plan</summary>
             
             \`\`\`terraform
-            ${process.env.PLAN}
+            ${planOutput}
             \`\`\`
             
             </details>
@@ -93,14 +103,14 @@ jobs:
             });
             
             if (botComment) {
-              github.rest.issues.updateComment({
+              await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: botComment.id,
                 body: output
               });
             } else {
-              github.rest.issues.createComment({
+              await github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
