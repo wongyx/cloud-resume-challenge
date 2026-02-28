@@ -173,7 +173,7 @@ jobs:
     steps:
       - name: Evaluate security gate
         run: |
-          if [[ "${{ needs.detect-changes.outputs.sast_required }}" == "false" ]]; then
+          if [[ "${{ needs.detect-changes.outputs.code }}" == "false" ]]; then
             echo "No relevant code changes — skipping SAST."
             exit 0
           fi
