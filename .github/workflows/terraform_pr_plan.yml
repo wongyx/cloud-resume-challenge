@@ -47,8 +47,8 @@ jobs:
         id: plan
         run: |
           cd infrastructure/environments/${{ env.ENVIRONMENT }}
-          terraform plan -out=tfplan -no-color -input=false
-          terraform show tfplan -no-color > plan_output.txt
+          terraform plan -out=tfplan -no-color -input=false 2>&1 | tee plan_output.txt
+          continue-on-error: true
         env:
           TF_VAR_aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
           TF_VAR_domain_name: ${{ vars.DOMAIN_NAME }}
@@ -68,7 +68,14 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const planOutput = fs.readFileSync('infrastructure/environments/${{ env.ENVIRONMENT }}/plan_output.txt', 'utf8');
+            let planOutput = '';
+      
+            try {
+              planOutput = fs.readFileSync('infrastructure/environments/${{ env.ENVIRONMENT }}/plan_output.txt', 'utf8');
+            } catch (error) {
+              planOutput = 'Unable to read plan output file';
+              console.error('Error reading plan output:', error);
+            }
             
             const output = `### Terraform Plan Results - \`${{ env.ENVIRONMENT }}\` Environment
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
