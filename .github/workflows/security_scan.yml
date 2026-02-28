@@ -3,13 +3,37 @@ name: "Security Scan - CodeQL & tfsec"
 on:
   pull_request:
     branches: [ main ]
+  push:
+    branches: [ main ]
   schedule:
     - cron: '0 0 1 * *' # Scan on every first day of each month
   workflow_dispatch:
 
 jobs:
+  detect-changes: # Detect important code changes and skip SAST if there are none
+    name: Detect Code Changes
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - 'frontend/**'
+              - 'backend/**'
+              - 'infrastructure/**'
+              - 'tests/**'
+
   analyze-code:
     name: CodeQL Analysis
+    needs: changes
+    if: needs.changes.outputs.code == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -43,6 +67,8 @@ jobs:
 
   security-scan:
     name: Security Scan (tfsec)
+    needs: changes
+    if: needs.changes.outputs.code == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -137,3 +163,26 @@ jobs:
             
             console.log('✅ No high or critical severity issues found.');
           }
+
+
+  security-summary:
+    name: Skip SAST to when unimportant changes are made
+    needs: [detect-changes, analyze-code, security-scan]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate security gate
+        run: |
+          if [[ "${{ needs.changes.outputs.sast_required }}" == "false" ]]; then
+            echo "No relevant code changes — skipping SAST."
+            exit 0
+          fi
+
+          if [[ "${{ needs.codeql.result }}" == "success" && \
+                "${{ needs.tfsec.result }}" == "success" ]]; then
+            echo "SAST passed."
+            exit 0
+          fi
+
+          echo "SAST failed."
+          exit 1
