@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   schedule:
     - cron: '0 0 1 * *' # Scan on every first day of each month
+  workflow_dispatch:
 
 jobs:
   analyze-code:
