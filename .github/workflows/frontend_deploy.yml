@@ -101,9 +101,11 @@ jobs:
       
       - name: Install dependencies
         run: npm install
+        working-directory: ./tests
       
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
+        working-directory: ./tests
       
       - name: Run Playwright smoke tests
         env:
@@ -112,6 +114,7 @@ jobs:
         run: |
           echo "Running Playwright smoke tests against ${TEST_WEBSITE_URL}"
           npx playwright test tests/smoke/full-integration.spec.ts
+        working-directory: ./tests
       
       - name: Configure AWS credentials for rollback
         if: failure()
@@ -247,9 +250,11 @@ jobs:
       
       - name: Install dependencies
         run: npm install
+        working-directory: ./tests
       
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
+        working-directory: ./tests
       
       - name: Run Playwright smoke tests
         id: smoke-test
@@ -259,6 +264,7 @@ jobs:
         run: |
           echo "Running Playwright smoke tests against ${PROD_WEBSITE_URL}"
           npx playwright test tests/smoke/full-integration.spec.ts
+        working-directory: ./tests
       
       - name: Configure AWS credentials for rollback
         if: failure()
