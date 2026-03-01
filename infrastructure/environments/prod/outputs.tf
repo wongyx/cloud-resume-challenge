@@ -68,5 +68,5 @@ output "api_endpoint" {
 
 output "sbom_bucket_name" {
   description = "Name of the SBOM S3 bucket"
-  value       = aws_s3_bucket.sbom_storage.id
+  value       = module.sbom.sbom_storage.id
 }
