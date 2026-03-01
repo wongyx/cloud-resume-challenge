@@ -65,3 +65,8 @@ output "api_endpoint" {
   description = "Full API endpoint for visitor counter"
   value       = module.backend.api_endpoint
 }
+
+output "sbom_bucket_name" {
+  description = "Name of the SBOM S3 bucket"
+  value       = module.sbom.sbom_bucket_name
+}
