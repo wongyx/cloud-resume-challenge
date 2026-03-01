@@ -94,3 +94,10 @@ module "backend" {
     ManagedBy   = "Terraform"
   }
 }
+
+module "sbom" {
+  source = "../../modules/sbom"
+  
+  sbom_bucket_name = var.sbom_bucket_name
+  environment = var.environment
+}

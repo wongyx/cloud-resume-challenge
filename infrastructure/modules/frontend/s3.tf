@@ -36,7 +36,7 @@ resource "aws_s3_bucket_versioning" "resume" {
   }
 }
 
-resource "aws_s3_bucket_lifecycle_configuration" "example" {
+resource "aws_s3_bucket_lifecycle_configuration" "resume" {
   bucket = aws_s3_bucket.resume.id
 
   rule {
