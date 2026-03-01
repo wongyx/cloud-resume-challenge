@@ -113,7 +113,7 @@ jobs:
           TEST_ENV: test
         run: |
           echo "Running Playwright smoke tests against ${TEST_WEBSITE_URL}"
-          npx playwright test tests/smoke/full-integration.spec.ts
+          npx playwright test smoke/full-integration.spec.ts
         working-directory: ./tests
       
       - name: Configure AWS credentials for rollback
@@ -263,7 +263,7 @@ jobs:
           TEST_ENV : prod
         run: |
           echo "Running Playwright smoke tests against ${PROD_WEBSITE_URL}"
-          npx playwright test tests/smoke/full-integration.spec.ts
+          npx playwright test smoke/full-integration.spec.ts
         working-directory: ./tests
       
       - name: Configure AWS credentials for rollback
