@@ -120,22 +120,16 @@ jobs:
       
       - name: Upload Python SBOM to S3
         run: |
-          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           PYTHON_SBOM=$(ls ./sbom-artifacts/sbom-python-*.json | head -1)
           
           if [ -f "$PYTHON_SBOM" ]; then
-            # Upload with timestamp
-            aws s3 cp "$PYTHON_SBOM" \
-              s3://${{ vars.SBOM_BUCKET_NAME }}/python/${TIMESTAMP}-sbom-python-${GITHUB_SHA:0:7}.json \
-              --metadata "commit-sha=${GITHUB_SHA},branch=${GITHUB_REF_NAME},repository=${{ github.repository }}"
-            
             # Upload as latest
             aws s3 cp "$PYTHON_SBOM" \
               s3://${{ vars.SBOM_BUCKET_NAME }}/python/latest-sbom-python.json \
-              --metadata "commit-sha=${GITHUB_SHA},branch=${GITHUB_REF_NAME},repository=${{ github.repository }},timestamp=${TIMESTAMP}"
+              --metadata "commit-sha=${GITHUB_SHA},branch=${GITHUB_REF_NAME},repository=${{ github.repository }}"
             
             echo "✅ Python SBOM uploaded to S3"
-            echo "📦 CycloneDX: s3://${{ vars.SBOM_BUCKET_NAME }}/python/${TIMESTAMP}-sbom-python-${GITHUB_SHA:0:7}.json"
+            echo "📦 CycloneDX: s3://${{ vars.SBOM_BUCKET_NAME }}/python/latest-sbom-python.json"
           else
             echo "❌ Python SBOM file not found"
             exit 1
@@ -143,22 +137,16 @@ jobs:
       
       - name: Upload NPM SBOM to S3
         run: |
-          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           NPM_SBOM=$(ls ./sbom-artifacts/sbom-npm-*.json | head -1)
           
           if [ -f "$NPM_SBOM" ]; then
-            # Upload with timestamp
-            aws s3 cp "$NPM_SBOM" \
-              s3://${{ vars.SBOM_BUCKET_NAME }}/npm/${TIMESTAMP}-sbom-npm-${GITHUB_SHA:0:7}.json \
-              --metadata "commit-sha=${GITHUB_SHA},branch=${GITHUB_REF_NAME},repository=${{ github.repository }}"
-            
             # Upload as latest
             aws s3 cp "$NPM_SBOM" \
               s3://${{ vars.SBOM_BUCKET_NAME }}/npm/latest-sbom-npm.json \
-              --metadata "commit-sha=${GITHUB_SHA},branch=${GITHUB_REF_NAME},repository=${{ github.repository }},timestamp=${TIMESTAMP}"
+              --metadata "commit-sha=${GITHUB_SHA},branch=${GITHUB_REF_NAME},repository=${{ github.repository }}"
             
             echo "✅ NPM SBOM uploaded to S3"
-            echo "📦 CycloneDX: s3://${{ vars.SBOM_BUCKET_NAME }}/npm/${TIMESTAMP}-sbom-npm-${GITHUB_SHA:0:7}.json"
+            echo "📦 CycloneDX: s3://${{ vars.SBOM_BUCKET_NAME }}/npm/latest-sbom-npm.json"
           else
             echo "❌ NPM SBOM file not found"
             exit 1
