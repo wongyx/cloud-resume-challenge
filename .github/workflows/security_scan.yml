@@ -10,13 +10,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  detect-changes: # Detect important code changes and skip SAST if there are none
+  detect-changes:
     name: Detect Code Changes
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
     outputs:
-      code: ${{ steps.filter.outputs.code }}
+      codeql: ${{ steps.filter.outputs.codeql }}
+      tfsec: ${{ steps.filter.outputs.tfsec }}
     steps:
       - uses: actions/checkout@v4
       
@@ -24,16 +25,16 @@ jobs:
         id: filter
         with:
           filters: |
-            code:
-              - 'frontend/**'
+            codeql:
               - 'backend/**'
-              - 'infrastructure/**'
               - 'tests/**'
+            tfsec:
+              - 'infrastructure/**'
 
   analyze-code:
     name: CodeQL Analysis
     needs: detect-changes
-    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: needs.detect-changes.outputs.codeql == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -68,7 +69,7 @@ jobs:
   security-scan:
     name: Security Scan (tfsec)
     needs: detect-changes
-    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: needs.detect-changes.outputs.tfsec == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -100,7 +101,7 @@ jobs:
     permissions:
       security-events: read
       pull-requests: write
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && !cancelled()
     
     steps:
     - name: Check Security Results
@@ -173,16 +174,28 @@ jobs:
     steps:
       - name: Evaluate security gate
         run: |
-          if [[ "${{ needs.detect-changes.outputs.code }}" == "false" ]]; then
+          # Check if any relevant changes were detected
+          if [[ "${{ needs.detect-changes.outputs.codeql }}" == "false" && \
+                "${{ needs.detect-changes.outputs.tfsec }}" == "false" ]]; then
             echo "No relevant code changes — skipping SAST."
             exit 0
           fi
 
-          if [[ "${{ needs.analyze-code.result }}" == "success" && \
-                "${{ needs.security-scan.result }}" == "success" ]]; then
-            echo "SAST passed."
-            exit 0
+          # Check CodeQL results (only if it ran)
+          if [[ "${{ needs.detect-changes.outputs.codeql }}" == "true" ]]; then
+            if [[ "${{ needs.analyze-code.result }}" != "success" ]]; then
+              echo "CodeQL analysis failed."
+              exit 1
+            fi
           fi
 
-          echo "SAST failed."
-          exit 1
+          # Check tfsec results (only if it ran)
+          if [[ "${{ needs.detect-changes.outputs.tfsec }}" == "true" ]]; then
+            if [[ "${{ needs.security-scan.result }}" != "success" ]]; then
+              echo "tfsec scan failed."
+              exit 1
+            fi
+          fi
+
+          echo "SAST passed."
+          exit 0
