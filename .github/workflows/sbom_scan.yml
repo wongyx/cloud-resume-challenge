@@ -82,7 +82,7 @@ jobs:
           syft scan dir:./node_modules \
             --source-name cloud-resume-tests \
             --source-version 1.0.0 \
-            --select-catalogers javascript-package-cataloger \
+            --select-catalogers +javascript-package-cataloger \
             --output cyclonedx-json=../sbom-npm-${GITHUB_SHA:0:7}.json
       
       - name: Upload NPM SBOM artifact
