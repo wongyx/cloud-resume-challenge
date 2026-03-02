@@ -26,7 +26,7 @@ permissions:
 
 env:
   AWS_REGION: 'ap-southeast-1'
-  SYFT_VERSION: 'v1.16.0'
+  SYFT_VERSION: 'v1.20.0'
 
 jobs:
   scan-python-dependencies:
@@ -86,6 +86,29 @@ jobs:
           path: |
             sbom-npm-*.json
           retention-days: 30
+      
+      - name: Debug NPM scan
+        run: |
+          echo "=== PWD ==="
+          pwd
+          
+          echo "=== Tests directory contents ==="
+          ls -la tests/
+          
+          echo "=== Node modules count ==="
+          ls tests/node_modules/ | wc -l
+          
+          echo "=== Sample node_modules ==="
+          ls tests/node_modules/ | head -10
+          
+          echo "=== NPM list ==="
+          cd tests && npm list --all
+          
+          echo "=== Syft table output ==="
+          syft scan ${{ github.workspace }}/tests --output table
+          
+          echo "=== Syft JSON artifact count ==="
+          syft scan ${{ github.workspace }}/tests --output json | jq '.artifacts | length'
 
   upload-to-s3:
     name: Upload SBOMs to S3
