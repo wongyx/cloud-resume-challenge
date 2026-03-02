@@ -16,6 +16,7 @@ on:
       - 'backend/lambda_code/visitor_counter/requirements.txt'
       - 'tests/package.json'
       - 'tests/package-lock.json'
+      - '.github/workflows/sbom_scan.yml'
   schedule:
     - cron: '0 0 1 * *' # Scan on every first day of each month
   workflow_dispatch:
@@ -27,6 +28,7 @@ permissions:
 env:
   AWS_REGION: 'ap-southeast-1'
   SYFT_VERSION: 'latest'
+  GRYPE_VERSION: 'latest'
 
 jobs:
   scan-python-dependencies:
@@ -84,12 +86,191 @@ jobs:
             --output cyclonedx-json=../sbom-npm-${GITHUB_SHA:0:7}.json
       
       - name: Upload NPM SBOM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/download-artifact@v4
         with:
           name: sbom-npm
           path: |
             sbom-npm-*.json
           retention-days: 30
+
+  vulnerability-scan:
+    name: Vulnerability Scan with Grype
+    needs: [scan-python-dependencies, scan-npm-dependencies]
+    runs-on: ubuntu-latest
+    # Only run vulnerability scan on pull requests, scheduled runs, or workflow dispatch
+    if: github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Download Python SBOM
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom-python
+          path: ./sbom-artifacts
+      
+      - name: Download NPM SBOM
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom-npm
+          path: ./sbom-artifacts
+      
+      - name: Install Grype
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin ${{ env.GRYPE_VERSION }}
+          grype version
+      
+      - name: Scan Python SBOM for vulnerabilities
+        id: grype-python
+        run: |
+          PYTHON_SBOM=$(ls ./sbom-artifacts/sbom-python-*.json | head -1)
+          
+          if [ -f "$PYTHON_SBOM" ]; then
+            echo "Scanning Python dependencies for vulnerabilities..."
+            grype sbom:"$PYTHON_SBOM" \
+              --output json \
+              --file grype-python-results.json \
+              --fail-on critical,high
+            
+            # Also generate human-readable report
+            grype sbom:"$PYTHON_SBOM" \
+              --output table \
+              --file grype-python-report.txt
+            
+            echo "python_scan_passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Python SBOM file not found"
+            echo "python_scan_passed=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+        continue-on-error: true
+      
+      - name: Scan NPM SBOM for vulnerabilities
+        id: grype-npm
+        run: |
+          NPM_SBOM=$(ls ./sbom-artifacts/sbom-npm-*.json | head -1)
+          
+          if [ -f "$NPM_SBOM" ]; then
+            echo "Scanning NPM dependencies for vulnerabilities..."
+            grype sbom:"$NPM_SBOM" \
+              --output json \
+              --file grype-npm-results.json \
+              --fail-on critical,high
+            
+            # Also generate human-readable report
+            grype sbom:"$NPM_SBOM" \
+              --output table \
+              --file grype-npm-report.txt
+            
+            echo "npm_scan_passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ NPM SBOM file not found"
+            echo "npm_scan_passed=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+        continue-on-error: true
+      
+      - name: Upload Grype results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: grype-results
+          path: |
+            grype-*-results.json
+            grype-*-report.txt
+          retention-days: 30
+      
+      - name: Generate vulnerability summary
+        if: always()
+        run: |
+          echo "## 🔒 Vulnerability Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${GITHUB_SHA:0:7}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${GITHUB_REF_NAME}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Python vulnerabilities
+          if [ -f "grype-python-results.json" ]; then
+            echo "### 🐍 Python Dependencies" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            CRITICAL=$(jq '[.matches[] | select(.vulnerability.severity == "Critical")] | length' grype-python-results.json 2>/dev/null || echo "0")
+            HIGH=$(jq '[.matches[] | select(.vulnerability.severity == "High")] | length' grype-python-results.json 2>/dev/null || echo "0")
+            MEDIUM=$(jq '[.matches[] | select(.vulnerability.severity == "Medium")] | length' grype-python-results.json 2>/dev/null || echo "0")
+            LOW=$(jq '[.matches[] | select(.vulnerability.severity == "Low")] | length' grype-python-results.json 2>/dev/null || echo "0")
+            
+            echo "| Severity | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| 🔴 Critical | $CRITICAL |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🟠 High | $HIGH |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🟡 Medium | $MEDIUM |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🟢 Low | $LOW |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            if [ -f "grype-python-report.txt" ]; then
+              echo "<details>" >> $GITHUB_STEP_SUMMARY
+              echo "<summary>📋 View detailed Python report</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              cat grype-python-report.txt >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "### 🐍 Python Dependencies" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Scan failed or no results available" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # NPM vulnerabilities
+          if [ -f "grype-npm-results.json" ]; then
+            echo "### 📦 NPM Dependencies" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            CRITICAL=$(jq '[.matches[] | select(.vulnerability.severity == "Critical")] | length' grype-npm-results.json 2>/dev/null || echo "0")
+            HIGH=$(jq '[.matches[] | select(.vulnerability.severity == "High")] | length' grype-npm-results.json 2>/dev/null || echo "0")
+            MEDIUM=$(jq '[.matches[] | select(.vulnerability.severity == "Medium")] | length' grype-npm-results.json 2>/dev/null || echo "0")
+            LOW=$(jq '[.matches[] | select(.vulnerability.severity == "Low")] | length' grype-npm-results.json 2>/dev/null || echo "0")
+            
+            echo "| Severity | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| 🔴 Critical | $CRITICAL |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🟠 High | $HIGH |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🟡 Medium | $MEDIUM |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🟢 Low | $LOW |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            if [ -f "grype-npm-report.txt" ]; then
+              echo "<details>" >> $GITHUB_STEP_SUMMARY
+              echo "<summary>📋 View detailed NPM report</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              cat grype-npm-report.txt >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "### 📦 NPM Dependencies" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Scan failed or no results available" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Check scan results
+        run: |
+          PYTHON_PASSED="${{ steps.grype-python.outputs.python_scan_passed }}"
+          NPM_PASSED="${{ steps.grype-npm.outputs.npm_scan_passed }}"
+          
+          if [[ "$PYTHON_PASSED" == "false" ]] || [[ "$NPM_PASSED" == "false" ]]; then
+            echo "❌ Vulnerability scan failed!"
+            echo "Critical or High severity vulnerabilities detected."
+            echo "Please review the scan results and update your dependencies."
+            exit 1
+          else
+            echo "✅ No critical or high severity vulnerabilities detected"
+          fi
       
   upload-to-s3:
     name: Upload SBOMs to S3
@@ -156,7 +337,7 @@ jobs:
     name: Generate SBOM Summary
     needs: [scan-python-dependencies, scan-npm-dependencies]
     runs-on: ubuntu-latest
-    if: always()
+    if: always() && github.event_name == 'push'
     
     steps:
       - name: Download Python SBOM
@@ -208,39 +389,25 @@ jobs:
             fi
             
             echo "" >> $GITHUB_STEP_SUMMARY
-            
-            # Only show S3 location if this is a push/schedule/manual run
-            if [[ "${{ github.event_name }}" == "push" || "${{ github.event_name }}" == "schedule" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-              echo "### 📍 S3 Location" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-              echo "s3://${{ vars.SBOM_BUCKET_NAME }}/" >> $GITHUB_STEP_SUMMARY
-              echo "├── python/" >> $GITHUB_STEP_SUMMARY
-              echo "│   └── latest-sbom-python.json" >> $GITHUB_STEP_SUMMARY
-              echo "└── npm/" >> $GITHUB_STEP_SUMMARY
-              echo "    └── latest-sbom-npm.json" >> $GITHUB_STEP_SUMMARY
-              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "### ℹ️ Note" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "SBOMs generated but not uploaded to S3 (pull request event)." >> $GITHUB_STEP_SUMMARY
-              echo "SBOMs are available as workflow artifacts for review." >> $GITHUB_STEP_SUMMARY
-            fi
+            echo "### 📍 S3 Location" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "s3://${{ vars.SBOM_BUCKET_NAME }}/" >> $GITHUB_STEP_SUMMARY
+            echo "├── python/" >> $GITHUB_STEP_SUMMARY
+            echo "│   └── latest-sbom-python.json" >> $GITHUB_STEP_SUMMARY
+            echo "└── npm/" >> $GITHUB_STEP_SUMMARY
+            echo "    └── latest-sbom-npm.json" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           fi
 
   notify-completion:
     name: Notify Scan Complete
     needs: [scan-python-dependencies, scan-npm-dependencies, generate-summary]
     runs-on: ubuntu-latest
-    if: success()
+    if: success() && github.event_name == 'push'
     
     steps:
       - name: Scan success
         run: |
           echo "✅ SBOM scan completed successfully"
-          
-          if [[ "${{ github.event_name }}" == "push" || "${{ github.event_name }}" == "schedule" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "📦 SBOMs uploaded to S3 bucket: ${{ vars.SBOM_BUCKET_NAME }}"
-          else
-            echo "📋 SBOMs generated and available as workflow artifacts"
-          fi
+          echo "📦 SBOMs uploaded to S3 bucket: ${{ vars.SBOM_BUCKET_NAME }}"
