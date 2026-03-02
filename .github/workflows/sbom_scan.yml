@@ -1,0 +1,216 @@
+name: SBOM Scan
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/lambda_code/visitor_counter/requirement.txt'
+      - 'tests/package.json'
+      - '.github/workflows/sbom_scan.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'backend/lambda_code/visitor_counter/requirement.txt'
+      - 'tests/package.json'
+  schedule:
+    - cron: '0 0 1 * *' # Scan on every first day of each month
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: 'ap-southeast-1'
+  SYFT_VERSION: 'v1.16.0'
+
+jobs:
+  scan-python-dependencies:
+    name: Scan Python Dependencies
+    runs-on: ubuntu-latest
+    environment: prod
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install Syft
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin ${{ env.SYFT_VERSION }}
+          syft version
+      
+      - name: Generate Python SBOM (CycloneDX format)
+        run: |
+          cd backend/lambda_code/visitor_counter
+          syft scan dir:. \
+            --file ../../../sbom-python-${GITHUB_SHA:0:7}.json \
+            --output cyclonedx-json \
+            --name visitor-counter-python \
+            --source-name ${{ github.repository }} \
+            --source-version ${GITHUB_SHA}
+      
+      - name: Upload Python SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-python
+          path: |
+            sbom-python-*.json
+          retention-days: 30
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Upload Python SBOM to S3
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          
+          # Upload with timestamp
+          aws s3 cp sbom-python-${GITHUB_SHA:0:7}.json \
+            s3://${{ vars.SBOM_BUCKET_NAME }}/python/${TIMESTAMP}-sbom-python-${GITHUB_SHA:0:7}.json \
+            --metadata "commit-sha=${GITHUB_SHA},branch=${GITHUB_REF_NAME},repository=${{ github.repository }}"
+          
+          # Upload as latest
+          aws s3 cp sbom-python-${GITHUB_SHA:0:7}.json \
+            s3://${{ vars.SBOM_BUCKET_NAME }}/python/latest-sbom-python.json \
+            --metadata "commit-sha=${GITHUB_SHA},branch=${GITHUB_REF_NAME},repository=${{ github.repository }},timestamp=${TIMESTAMP}"
+          
+          echo "✅ Python SBOM uploaded to S3"
+          echo "📦 CycloneDX: s3://${{ vars.SBOM_BUCKET_NAME }}/python/${TIMESTAMP}-sbom-python-${GITHUB_SHA:0:7}.json"
+
+  scan-npm-dependencies:
+    name: Scan NPM Dependencies
+    runs-on: ubuntu-latest
+    environment: prod
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install Syft
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin ${{ env.SYFT_VERSION }}
+          syft version
+      
+      - name: Generate NPM SBOM (CycloneDX format)
+        run: |
+          cd tests
+          syft scan dir:. \
+            --file ../sbom-npm-${GITHUB_SHA:0:7}.json \
+            --output cyclonedx-json \
+            --name visitor-counter-tests \
+            --source-name ${{ github.repository }} \
+            --source-version ${GITHUB_SHA}
+      
+      - name: Upload NPM SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-npm
+          path: |
+            sbom-npm-*.json
+          retention-days: 30
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Upload NPM SBOM to S3
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          
+          # Upload with timestamp
+          aws s3 cp sbom-npm-${GITHUB_SHA:0:7}.json \
+            s3://${{ vars.SBOM_BUCKET_NAME }}/npm/${TIMESTAMP}-sbom-npm-${GITHUB_SHA:0:7}.json \
+            --metadata "commit-sha=${GITHUB_SHA},branch=${GITHUB_REF_NAME},repository=${{ github.repository }}"
+          
+          # Upload as latest
+          aws s3 cp sbom-npm-${GITHUB_SHA:0:7}.json \
+            s3://${{ vars.SBOM_BUCKET_NAME }}/npm/latest-sbom-npm.json \
+            --metadata "commit-sha=${GITHUB_SHA},branch=${GITHUB_REF_NAME},repository=${{ github.repository }},timestamp=${TIMESTAMP}"
+          
+          echo "✅ NPM SBOM uploaded to S3"
+          echo "📦 CycloneDX: s3://${{ vars.SBOM_BUCKET_NAME }}/npm/${TIMESTAMP}-sbom-npm-${GITHUB_SHA:0:7}.json"
+
+  generate-summary:
+    name: Generate SBOM Summary
+    needs: [scan-python-dependencies, scan-npm-dependencies]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Download Python SBOM
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom-python
+          path: ./sbom-artifacts
+        continue-on-error: true
+      
+      - name: Download NPM SBOM
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom-npm
+          path: ./sbom-artifacts
+        continue-on-error: true
+      
+      - name: Generate Summary
+        run: |
+          echo "## 🔍 SBOM Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${GITHUB_SHA:0:7}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${GITHUB_REF_NAME}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -d "./sbom-artifacts" ]; then
+            echo "### 📦 Generated SBOMs (CycloneDX Format)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            if ls ./sbom-artifacts/sbom-python-*.json >/dev/null 2>&1; then
+              PYTHON_SBOM=$(ls ./sbom-artifacts/sbom-python-*.json | head -1)
+              if [ -f "$PYTHON_SBOM" ]; then
+                PYTHON_COMPONENTS=$(jq -r '.components | length' "$PYTHON_SBOM" 2>/dev/null || echo "N/A")
+                echo "- ✅ **Python Dependencies**: $PYTHON_COMPONENTS components" >> $GITHUB_STEP_SUMMARY
+              fi
+            else
+              echo "- ⚠️ **Python Dependencies**: Failed to generate" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            if ls ./sbom-artifacts/sbom-npm-*.json >/dev/null 2>&1; then
+              NPM_SBOM=$(ls ./sbom-artifacts/sbom-npm-*.json | head -1)
+              if [ -f "$NPM_SBOM" ]; then
+                NPM_COMPONENTS=$(jq -r '.components | length' "$NPM_SBOM" 2>/dev/null || echo "N/A")
+                echo "- ✅ **NPM Dependencies**: $NPM_COMPONENTS components" >> $GITHUB_STEP_SUMMARY
+              fi
+            else
+              echo "- ⚠️ **NPM Dependencies**: Failed to generate" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📍 S3 Location" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "s3://${{ vars.SBOM_BUCKET_NAME }}/" >> $GITHUB_STEP_SUMMARY
+            echo "├── python/" >> $GITHUB_STEP_SUMMARY
+            echo "│   └── latest-sbom-python.json" >> $GITHUB_STEP_SUMMARY
+            echo "└── npm/" >> $GITHUB_STEP_SUMMARY
+            echo "    └── latest-sbom-npm.json" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  notify-completion:
+    name: Notify Scan Complete
+    needs: [scan-python-dependencies, scan-npm-dependencies, generate-summary]
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+      - name: Scan success
+        run: |
+          echo "✅ SBOM scan completed successfully"
+          echo "📦 SBOMs uploaded to S3 bucket: ${{ vars.SBOM_BUCKET_NAME }}"
