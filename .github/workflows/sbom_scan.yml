@@ -128,7 +128,7 @@ jobs:
             grype sbom:"$PYTHON_SBOM" \
               --output json \
               --file grype-python-results.json \
-              --fail-on critical,high
+              --fail-on high
             
             # Also generate human-readable report
             grype sbom:"$PYTHON_SBOM" \
@@ -153,7 +153,7 @@ jobs:
             grype sbom:"$NPM_SBOM" \
               --output json \
               --file grype-npm-results.json \
-              --fail-on critical,high
+              --fail-on high
             
             # Also generate human-readable report
             grype sbom:"$NPM_SBOM" \
