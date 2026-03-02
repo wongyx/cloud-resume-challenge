@@ -1,7 +1,7 @@
 resource "aws_s3_bucket" "sbom_storage" {
+  count = var.environment == "prod" ? 1 : 0
+
   bucket = var.sbom_bucket_name
-  force_destroy = var.environment == "test" ? true : false
-  
   tags = {
     Purpose     = "SBOM Storage"
     Project     = "Cloud Resume Challenge"
@@ -10,6 +10,8 @@ resource "aws_s3_bucket" "sbom_storage" {
 }
 
 resource "aws_s3_bucket_versioning" "sbom_storage" {
+  count = var.environment == "prod" ? 1 : 0
+
   bucket = aws_s3_bucket.sbom_storage.id
   
   versioning_configuration {
@@ -18,6 +20,8 @@ resource "aws_s3_bucket_versioning" "sbom_storage" {
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "sbom_storage" {
+  count = var.environment == "prod" ? 1 : 0
+
   bucket = aws_s3_bucket.sbom_storage.id
 
   rule {
@@ -28,6 +32,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "sbom_storage" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "sbom_storage" {
+  count = var.environment == "prod" ? 1 : 0
+
   bucket = aws_s3_bucket.sbom_storage.id
 
   rule {
@@ -42,6 +48,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "sbom_storage" {
 }
 
 resource "aws_s3_bucket_public_access_block" "sbom_storage" {
+  count = var.environment == "prod" ? 1 : 0
+  
   bucket = aws_s3_bucket.sbom_storage.id
 
   block_public_acls       = true
