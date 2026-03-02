@@ -74,10 +74,25 @@ jobs:
           cd tests
           npm ci --include=dev
       
+      - name: Verify node_modules structure
+        run: |
+          cd tests
+          echo "=== Top-level packages ==="
+          ls -la node_modules/
+          echo ""
+          echo "=== @playwright/test contents ==="
+          ls -la node_modules/@playwright/test/
+          echo ""
+          echo "=== Check for package.json files ==="
+          find node_modules -name "package.json" -type f | head -10
+          echo ""
+          echo "=== Total package.json count ==="
+          find node_modules -name "package.json" -type f | wc -l
+      
       - name: Generate NPM SBOM (CycloneDX format)
         run: |
           cd tests
-          syft scan npm:. \
+          syft scan dir:./node_modules \
             --output cyclonedx-json=../sbom-npm-${GITHUB_SHA:0:7}.json
       
       - name: Upload NPM SBOM artifact
