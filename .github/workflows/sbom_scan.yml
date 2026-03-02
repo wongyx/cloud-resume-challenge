@@ -7,6 +7,7 @@ on:
     paths:
       - 'backend/lambda_code/visitor_counter/requirements.txt'
       - 'tests/package.json'
+      - 'tests/package-lock.json'
       - '.github/workflows/sbom_scan.yml'
   pull_request:
     branches:
@@ -14,6 +15,7 @@ on:
     paths:
       - 'backend/lambda_code/visitor_counter/requirements.txt'
       - 'tests/package.json'
+      - 'tests/package-lock.json'
   schedule:
     - cron: '0 0 1 * *' # Scan on every first day of each month
   workflow_dispatch:
