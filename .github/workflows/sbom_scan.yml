@@ -5,14 +5,14 @@ on:
     branches:
       - main
     paths:
-      - 'backend/lambda_code/visitor_counter/requirement.txt'
+      - 'backend/lambda_code/visitor_counter/requirements.txt'
       - 'tests/package.json'
       - '.github/workflows/sbom_scan.yml'
   pull_request:
     branches:
       - main
     paths:
-      - 'backend/lambda_code/visitor_counter/requirement.txt'
+      - 'backend/lambda_code/visitor_counter/requirements.txt'
       - 'tests/package.json'
   schedule:
     - cron: '0 0 1 * *' # Scan on every first day of each month
