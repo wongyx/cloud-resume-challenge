@@ -125,17 +125,21 @@ jobs:
           
           if [ -f "$PYTHON_SBOM" ]; then
             echo "Scanning Python dependencies for vulnerabilities..."
-            grype sbom:"$PYTHON_SBOM" \
+            
+            # Run Grype and capture exit code
+            if grype sbom:"$PYTHON_SBOM" \
               --output json \
               --file grype-python-results.json \
-              --fail-on high
+              --fail-on high; then
+              echo "python_scan_passed=true" >> $GITHUB_OUTPUT
+            else
+              echo "python_scan_passed=false" >> $GITHUB_OUTPUT
+            fi
             
-            # Also generate human-readable report
+            # Always generate human-readable report
             grype sbom:"$PYTHON_SBOM" \
               --output table \
-              --file grype-python-report.txt
-            
-            echo "python_scan_passed=true" >> $GITHUB_OUTPUT
+              --file grype-python-report.txt || true
           else
             echo "❌ Python SBOM file not found"
             echo "python_scan_passed=false" >> $GITHUB_OUTPUT
@@ -150,17 +154,21 @@ jobs:
           
           if [ -f "$NPM_SBOM" ]; then
             echo "Scanning NPM dependencies for vulnerabilities..."
-            grype sbom:"$NPM_SBOM" \
+            
+            # Run Grype and capture exit code
+            if grype sbom:"$NPM_SBOM" \
               --output json \
               --file grype-npm-results.json \
-              --fail-on high
+              --fail-on high; then
+              echo "npm_scan_passed=true" >> $GITHUB_OUTPUT
+            else
+              echo "npm_scan_passed=false" >> $GITHUB_OUTPUT
+            fi
             
-            # Also generate human-readable report
+            # Always generate human-readable report
             grype sbom:"$NPM_SBOM" \
               --output table \
-              --file grype-npm-report.txt
-            
-            echo "npm_scan_passed=true" >> $GITHUB_OUTPUT
+              --file grype-npm-report.txt || true
           else
             echo "❌ NPM SBOM file not found"
             echo "npm_scan_passed=false" >> $GITHUB_OUTPUT
