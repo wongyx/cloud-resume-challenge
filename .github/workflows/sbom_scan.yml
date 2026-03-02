@@ -68,6 +68,11 @@ jobs:
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin ${{ env.SYFT_VERSION }}
           syft version
+        
+      - name: Install NPM dependencies
+        run: |
+          cd tests
+          npm ci --include=dev
       
       - name: Generate NPM SBOM (CycloneDX format)
         run: |
