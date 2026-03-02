@@ -77,7 +77,9 @@ jobs:
       - name: Generate NPM SBOM (CycloneDX format)
         run: |
           cd tests
-          syft packages . \
+          syft scan . \
+            --source-name cloud-resume-tests \
+            --source-version 1.0.0 \
             --output cyclonedx-json=../sbom-npm-${GITHUB_SHA:0:7}.json
       
       - name: Upload NPM SBOM artifact
