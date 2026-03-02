@@ -12,7 +12,7 @@ resource "aws_s3_bucket" "sbom_storage" {
 resource "aws_s3_bucket_versioning" "sbom_storage" {
   count = var.environment == "prod" ? 1 : 0
 
-  bucket = aws_s3_bucket.sbom_storage.id
+  bucket = aws_s3_bucket.sbom_storage[0].id
   
   versioning_configuration {
     status = "Enabled"
@@ -22,7 +22,7 @@ resource "aws_s3_bucket_versioning" "sbom_storage" {
 resource "aws_s3_bucket_server_side_encryption_configuration" "sbom_storage" {
   count = var.environment == "prod" ? 1 : 0
 
-  bucket = aws_s3_bucket.sbom_storage.id
+  bucket = aws_s3_bucket.sbom_storage[0].id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -34,7 +34,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "sbom_storage" {
 resource "aws_s3_bucket_lifecycle_configuration" "sbom_storage" {
   count = var.environment == "prod" ? 1 : 0
 
-  bucket = aws_s3_bucket.sbom_storage.id
+  bucket = aws_s3_bucket.sbom_storage[0].id
 
   rule {
     id     = "delete-old-versions"
@@ -49,8 +49,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "sbom_storage" {
 
 resource "aws_s3_bucket_public_access_block" "sbom_storage" {
   count = var.environment == "prod" ? 1 : 0
-  
-  bucket = aws_s3_bucket.sbom_storage.id
+
+  bucket = aws_s3_bucket.sbom_storage[0].id
 
   block_public_acls       = true
   block_public_policy     = true
