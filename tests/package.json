@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "lodash": "4.17.15"
   }
 }
