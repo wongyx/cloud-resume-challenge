@@ -45,11 +45,7 @@ jobs:
         run: |
           cd backend/lambda_code/visitor_counter
           syft scan dir:. \
-            --file ../../../sbom-python-${GITHUB_SHA:0:7}.json \
-            --output cyclonedx-json \
-            --name visitor-counter-python \
-            --source-name ${{ github.repository }} \
-            --source-version ${GITHUB_SHA}
+            --output cyclonedx-json=../../../sbom-python-${GITHUB_SHA:0:7}.json
       
       - name: Upload Python SBOM artifact
         uses: actions/upload-artifact@v4
@@ -100,11 +96,7 @@ jobs:
         run: |
           cd tests
           syft scan dir:. \
-            --file ../sbom-npm-${GITHUB_SHA:0:7}.json \
-            --output cyclonedx-json \
-            --name visitor-counter-tests \
-            --source-name ${{ github.repository }} \
-            --source-version ${GITHUB_SHA}
+            --output cyclonedx-json=../sbom-npm-${GITHUB_SHA:0:7}.json
       
       - name: Upload NPM SBOM artifact
         uses: actions/upload-artifact@v4
