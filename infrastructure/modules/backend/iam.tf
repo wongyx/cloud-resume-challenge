@@ -113,7 +113,40 @@ resource "aws_iam_policy" "github_actions" {
      {
        Effect = "Allow"
        Action = [
-         "s3:*",
+         "s3:CreateBucket",
+          "s3:DeleteBucket",
+          "s3:GetBucketPolicy",
+          "s3:PutBucketPolicy",
+          "s3:DeleteBucketPolicy",
+          "s3:GetBucketPolicyStatus",
+          "s3:GetBucketAcl",
+          "s3:GetBucketCORS",
+          "s3:PutBucketCORS",
+          "s3:GetBucketWebsite",
+          "s3:PutBucketWebsite",
+          "s3:DeleteBucketWebsite",
+          "s3:GetBucketVersioning",
+          "s3:PutBucketVersioning",
+          "s3:GetBucketRequestPayment",
+          "s3:GetBucketTagging",
+          "s3:PutBucketTagging",
+          "s3:GetBucketLogging",
+          "s3:PutBucketLogging",
+          "s3:GetEncryptionConfiguration",
+          "s3:PutEncryptionConfiguration",
+          "s3:GetBucketPublicAccessBlock",
+          "s3:PutBucketPublicAccessBlock",
+          "s3:GetBucketObjectLockConfiguration",
+          "s3:GetLifecycleConfiguration",
+          "s3:PutLifecycleConfiguration",
+          "s3:ListBucket",
+          "s3:ListBucketVersions",
+          "s3:GetBucketLocation",
+          "s3:GetAccelerateConfiguration",
+          "s3:PutAccelerateConfiguration",
+          "s3:GetReplicationConfiguration",
+          "s3:PutEncryptionConfiguration",
+          "s3:GetBucketNotification"
        ]
        Resource = "arn:aws:s3:::*cloud-resume*"
      },
@@ -135,9 +168,30 @@ resource "aws_iam_policy" "github_actions" {
      {
        Effect = "Allow"
        Action = [
-         "lambda:*"
+          "lambda:CreateFunction",
+          "lambda:UpdateFunctionCode",
+          "lambda:UpdateFunctionConfiguration",
+          "lambda:GetFunction",
+          "lambda:GetFunctionConfiguration",
+          "lambda:DeleteFunction",
+          "lambda:PublishVersion",
+          "lambda:CreateAlias",
+          "lambda:UpdateAlias",
+          "lambda:DeleteAlias",
+          "lambda:GetAlias",
+          "lambda:ListVersionsByFunction",
+          "lambda:AddPermission",
+          "lambda:RemovePermission",
+          "lambda:GetPolicy",
+          "lambda:TagResource",
+          "lambda:UntagResource",
+          "lambda:ListTags",
+          "lambda:PutFunctionEventInvokeConfig",
+          "lambda:GetFunctionEventInvokeConfig",
+          "lambda:GetFunctionCodeSigningConfig",
+          "lambda:GetRuntimeManagementConfig"
        ]
-       Resource = "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:*"
+       Resource = "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${var.environment}-${var.project_name}-visitor-counter*"
      },
     
      # CloudFront - Distribution management
@@ -155,24 +209,46 @@ resource "aws_iam_policy" "github_actions" {
          "cloudfront:TagResource",
          "cloudfront:UntagResource",
          "cloudfront:ListTagsForResource",
-         "cloudfront:CreateCloudFrontOriginAccessIdentity",
-         "cloudfront:GetCloudFrontOriginAccessIdentity",
-         "cloudfront:UpdateCloudFrontOriginAccessIdentity",
-         "cloudfront:DeleteCloudFrontOriginAccessIdentity",
-         "cloudfront:ListCloudFrontOriginAccessIdentities",
          "cloudfront:ListDistributions",
-         "cloudfront:GetOriginAccessControl"
+         "cloudfront:GetOriginAccessControl",
+         "cloudfront:CreateOriginAccessControl",
+         "cloudfront:DeleteOriginAccessControl",
+         "cloudfront:UpdateOriginAccessControl",
+         "cloudfront:ListOriginAccessControls"
        ]
        Resource = "*"
      },
     
-     # DynamoDB - Table management
+     # DynamoDB - Visitor counter management
      {
        Effect = "Allow"
        Action = [
-         "dynamodb:*"
+          "dynamodb:CreateTable",
+          "dynamodb:DeleteTable",
+          "dynamodb:DescribeTable",
+          "dynamodb:DescribeTimeToLive",
+          "dynamodb:UpdateTimeToLive",
+          "dynamodb:DescribeContinuousBackups",
+          "dynamodb:UpdateContinuousBackups",
+          "dynamodb:ListTagsOfResource",
+          "dynamodb:TagResource",
+          "dynamodb:UntagResource",
+          "dynamodb:UpdateTable",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem"
        ]
-       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/*"
+       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.environment}-${var.project_name}-visitor-counter*"
+     },
+
+     {
+      Effect = "Allow"
+       Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:DeleteItem"
+       ]
+       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/terraform-state-lock"
      },
     
      # API Gateway - REST API management
