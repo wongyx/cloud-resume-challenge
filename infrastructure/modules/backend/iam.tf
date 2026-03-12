@@ -140,7 +140,8 @@ resource "aws_iam_policy" "github_actions" {
           "s3:PutLifecycleConfiguration",
           "s3:ListBucket",
           "s3:ListBucketVersions",
-          "s3:GetBucketLocation"
+          "s3:GetBucketLocation",
+          "s3:GetAccelerateConfiguration"
        ]
        Resource = "arn:aws:s3:::*cloud-resume*"
      },
@@ -185,7 +186,7 @@ resource "aws_iam_policy" "github_actions" {
           "lambda:GetFunctionCodeSigningConfig",
           "lambda:GetRuntimeManagementConfig"
        ]
-       Resource = "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${var.environment}-${var.project_name}-visitor-counter"
+       Resource = "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${var.environment}-${var.project_name}-visitor-counter*"
      },
     
      # CloudFront - Distribution management
@@ -229,7 +230,7 @@ resource "aws_iam_policy" "github_actions" {
           "dynamodb:UntagResource",
           "dynamodb:UpdateTable"
        ]
-       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.environment}-${var.project_name}-visitor-counter"
+       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.environment}-${var.project_name}-visitor-counter*"
      },
 
      {
