@@ -227,9 +227,11 @@ resource "aws_iam_policy" "github_actions" {
           "dynamodb:ListTagsOfResource",
           "dynamodb:TagResource",
           "dynamodb:UntagResource",
-          "dynamodb:UpdateTable"
+          "dynamodb:UpdateTable",
+          "dynamodb:PutItem",
+          "dynamodb:GetItem"
        ]
-       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/*"
+       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.environment}-${var.project_name}-visitor-counter"
      },
     
      # API Gateway - REST API management
