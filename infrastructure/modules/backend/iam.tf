@@ -213,7 +213,7 @@ resource "aws_iam_policy" "github_actions" {
        Resource = "*"
      },
     
-     # DynamoDB - Table management
+     # DynamoDB - Visitor counter management
      {
        Effect = "Allow"
        Action = [
@@ -227,9 +227,17 @@ resource "aws_iam_policy" "github_actions" {
           "dynamodb:ListTagsOfResource",
           "dynamodb:TagResource",
           "dynamodb:UntagResource",
-          "dynamodb:UpdateTable",
+          "dynamodb:UpdateTable"
+       ]
+       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.environment}-${var.project_name}-visitor-counter"
+     },
+
+     {
+      Effect = "Allow"
+       Action = [
           "dynamodb:PutItem",
-          "dynamodb:GetItem"
+          "dynamodb:GetItem",
+          "dynamodb:DeleteItem"
        ]
        Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.environment}-${var.project_name}-visitor-counter"
      },
