@@ -239,7 +239,7 @@ resource "aws_iam_policy" "github_actions" {
           "dynamodb:GetItem",
           "dynamodb:DeleteItem"
        ]
-       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.environment}-${var.project_name}-visitor-counter"
+       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/terraform-state-lock"
      },
     
      # API Gateway - REST API management
