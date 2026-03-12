@@ -118,6 +118,7 @@ resource "aws_iam_policy" "github_actions" {
           "s3:GetBucketPolicy",
           "s3:PutBucketPolicy",
           "s3:DeleteBucketPolicy",
+          "s3:GetBucketPolicyStatus",
           "s3:GetBucketAcl",
           "s3:GetBucketCORS",
           "s3:PutBucketCORS",
@@ -141,7 +142,11 @@ resource "aws_iam_policy" "github_actions" {
           "s3:ListBucket",
           "s3:ListBucketVersions",
           "s3:GetBucketLocation",
-          "s3:GetAccelerateConfiguration"
+          "s3:GetAccelerateConfiguration",
+          "s3:PutAccelerateConfiguration",
+          "s3:GetReplicationConfiguration",
+          "s3:PutEncryptionConfiguration",
+          "s3:GetBucketNotification"
        ]
        Resource = "arn:aws:s3:::*cloud-resume*"
      },
@@ -228,7 +233,10 @@ resource "aws_iam_policy" "github_actions" {
           "dynamodb:ListTagsOfResource",
           "dynamodb:TagResource",
           "dynamodb:UntagResource",
-          "dynamodb:UpdateTable"
+          "dynamodb:UpdateTable",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem"
        ]
        Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.environment}-${var.project_name}-visitor-counter*"
      },
