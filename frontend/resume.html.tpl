@@ -13,7 +13,8 @@
       <div class="header-left">
         <h1>Wong Yong Xiang</h1>
       <p class="contact"> 
-        <a href="https://www.linkedin.com/in/wongyongxiang" target="_blank">LinkedIn</a>
+        <a href="https://www.linkedin.com/in/wongyongxiang" target="_blank">LinkedIn</a> | 
+        <a href="https://github.com/wongyx" target="_blank">GitHub</a>
       </p>
       </div>
 
@@ -38,11 +39,9 @@
     <section>
       <h2>Skills</h2>
       <ul class="skills">
-        <li>Python, C, Burp Suite, AWS</li>
-        <li>SQL, JavaScript, Git, Linux</li>
-        <li>VBA, Power Automate</li>
-        <li>Microsoft Office (Basic)</li>
-        <li>English & Chinese (Fluent)</li>
+        <li><b>Security Tools & Testing:</b> Burp Suite, Postman, Golang code review, Python scripting</li>
+        <li><b>Cloud & DevOps:</b> AWS, Terraform, Git, GitHub CI/CD, Linux systems</li>
+        <li><b>Languages:</b> Native proficiency in English and Mandarin Chinese</li>
       </ul>
     </section>
 
@@ -54,15 +53,27 @@
     </section>
 
     <section>
-      <h2>Internship & Work Experience</h2>
+      <h2>Work Experience</h2>
+      <div class="item">
+        <h3>Matrixport – Cybersecurity Engineer</h3>
+        <span class="date">July 2025 – Present</span>
+        <ul>
+          <li>Integrated 'Shift Left' security practices into the SDLC by partnering with engineering teams for the development of internal systems. Conduct deep-dive audits of Golang source code and RESTful APIs, remediating vulnerabilities prior to production.</li>
+          <li>Constructed the mapping of complex AWS and on-premise network topology, and performed security audits of firewalls and AWS Security Groups to eliminate misconfigurations and enforce least-privilege access.</li>
+          <li>Developed and evaluated a prototype fuzzer based on recent research</li>
+          <li>Led Proof of Concept (POC) evaluations for third-party security vendors, aligning technical capabilities with organisational risk requirements to ensure high-ROI tool acquisition.</li>
+          <li>Executed security assessments of client-facing applications at the pre-launch stage using BurpSuite, ensuring all vulnerabilities were addressed to protect the brand and user data upon public release</li>
+        </ul>
+      </div>
+      
       <div class="item">
         <h3>DSO National Laboratories – Cybersecurity Research Intern</h3>
         <span class="date">May 2024 – Aug 2024</span>
         <ul>
-          <li>Used AFL++ fuzzers to identify vulnerabilities in Linux programs</li>
-          <li>Analysed and improved existing AFL++ C code variants</li>
-          <li>Developed and evaluated a prototype fuzzer based on recent research</li>
-          <li>Researched advanced fuzzing strategies</li>
+          <li>Made use of state of the art fuzzers like AFL++ to test and identify vulnerabilities in Linux programs</li>
+          <li>Analysed the C code of existing AFL++ variant to understand how the program works and identify areas of improvement</li>
+          <li>Developed an prototype fuzzer built on top of current fuzzer written in C by integrating new research ideas published in recent years. Tested prototype and confirmed its improvement in performance. Documented code changes for the supervisor</li>
+          <li>Researched on new fuzzing strategies that improves efficiency on detecting vulnerabilities in program</li>
           <li>Debugged C/C++ programs using GDB</li>
         </ul>
       </div>
@@ -71,10 +82,10 @@
         <h3>Phillip Capital – Software Development Intern</h3>
         <span class="date">May 2023 – Jul 2023</span>
         <ul>
-          <li>Built Python web scrapers to automate large-scale data collection</li>
-          <li>Analysed and documented C++ real-time data processing systems</li>
-          <li>Proposed improvements to data flow frameworks</li>
-          <li>Implemented RPA to replace SMS alerts with Teams messages, saving $2000–$3000/month</li>
+          <li>Developed a web scraping program using Python for retrieving mass data quickly from the web, freeing up staff's time from repetitive tasks.</li>
+          <li>Analysed a C++ program that retrieves and processes real time data. Documented program's flow for the software development team.</li>
+          <li>Analysed existing data flow framework, and suggested ideas on a necessary revamp in existing framework due to a change of data source.</li>
+          <li>Made use of robotic process automation to replace important SMS messages with Microsoft Teams messages, helping save $2000-$3000 every month.</li>
         </ul>
       </div>
     </section>
@@ -82,19 +93,13 @@
     <section>
       <h2>Projects</h2>
       <div class="item">
-        <h3>TastiNUS Mobile Application</h3>
-        <p>
-          React Native frontend with Supabase backend. Features include food search,
-          filtering, reviews, user profiles, and a recommendation wheel.
-        </p>
-      </div>
-
-      <div class="item">
-        <h3>AI Agent for Breakthrough Game</h3>
-        <p>
-          Implemented using Python with iterative deepening search, alpha-beta pruning,
-          transposition tables, and move ordering.
-        </p>
+        <h3>Cloud Resume Challenge</h3>
+        <ul>
+          <li>Deployed serverless cloud resume website on AWS using S3, CloudFront, Lambda, and DynamoDB.</li>
+          <li>Provisioned multi-environment infrastructure using Terraform with remote state in S3 and locking via DynamoDB.</li>
+          <li>Built CI/CD pipeline with GitHub Actions integrating security scanning (CodeQL, tfsec) and SCA (Syft + Grype).</li>
+          <li>Secured pipeline access using GitHub OIDC authentication with least-privilege IAM policies.</li>
+        </ul>
       </div>
     </section>
 
