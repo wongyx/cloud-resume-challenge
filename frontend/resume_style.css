@@ -67,6 +67,7 @@ ul {
 
 .skills li {
   list-style-type: square;
+  margin-bottom: 3px;
 }
 
 header.resume-header {
@@ -102,4 +103,8 @@ header.resume-header {
   font-size: 20px;
   font-weight: bold;
   min-width: 60px;
+}
+
+.item li {
+    margin-bottom: 5px;
 }
