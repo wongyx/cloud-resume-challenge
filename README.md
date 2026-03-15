@@ -35,7 +35,7 @@ The website can be found at: [www.wongyx.com](https://www.wongyx.com)
 Security controls are integrated directly into the CI/CD pipeline.
 
 ### Static Application Security Testing (SAST)
-- **GitHub CodeQL** — scans the Python codebase for vulnerabilities before code is merged
+- **GitHub CodeQL** — scans the Python and Typescript codebase for vulnerabilities before code is merged
 
 ### Infrastructure Security Scanning
 - **tfsec** — detects misconfigurations and insecure Terraform definitions
