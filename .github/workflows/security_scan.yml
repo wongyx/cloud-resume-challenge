@@ -79,20 +79,26 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Install tfsec
+      run: |
+        curl -sLo tfsec https://github.com/aquasecurity/tfsec/releases/download/v1.28.14/tfsec-linux-amd64
+        chmod +x tfsec
+        sudo mv tfsec /usr/local/bin/
+
+    - name: Run tfsec Security Check
+      run: |
+        tfsec infrastructure/ \
+          --minimum-severity HIGH \
+          --config-file ${{ github.workspace }}/.github/workflows/.tfsec/config.yml
+
     - name: Run tfsec PR Commenter
+      if: github.event_name == 'pull_request'
       uses: aquasecurity/tfsec-pr-commenter-action@v1.3.1
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         working_directory: infrastructure/
         soft_fail_commenter: false
-        tfsec_args: --config-file=.tfsec/config.yml
-
-    - name: Run tfsec Security Check
-      uses: aquasecurity/tfsec-action@v1.0.3
-      with:
-        working_directory: infrastructure/
-        soft_fail: false
-        additional_args: --minimum-severity HIGH --config-file .tfsec/config.yml
+        tfsec_args: --config-file ${{ github.workspace }}/.github/workflows/.tfsec/config.yml
 
   check-high-severity:
     name: Check for High Severity Issues
@@ -164,7 +170,6 @@ jobs:
             
             console.log('✅ No high or critical severity issues found.');
           }
-
 
   security-summary:
     name: SAST scanning
