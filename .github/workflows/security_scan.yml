@@ -80,8 +80,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Install tfsec
-      run: |
-        curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+      uses: aquasecurity/setup-tfsec@v1
 
     - name: Run tfsec Security Check
       run: |
@@ -168,7 +167,6 @@ jobs:
             
             console.log('✅ No high or critical severity issues found.');
           }
-
 
   security-summary:
     name: SAST scanning
