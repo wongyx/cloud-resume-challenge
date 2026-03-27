@@ -98,7 +98,7 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         working_directory: infrastructure/
         soft_fail_commenter: false
-        tfsec_args: --config-file ${{ github.workspace }}/.tfsec/config.yml
+        tfsec_args: --config-file ${{ github.workspace }}/.github/workflows/.tfsec/config.yml
 
   check-high-severity:
     name: Check for High Severity Issues
