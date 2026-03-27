@@ -88,7 +88,6 @@ jobs:
     - name: Run tfsec Security Check
       run: |
         tfsec infrastructure/ \
-          --minimum-severity HIGH \
           --config-file .tfsec/config.yml
 
     - name: Run tfsec PR Commenter
