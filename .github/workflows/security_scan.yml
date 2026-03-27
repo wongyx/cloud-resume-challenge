@@ -89,7 +89,7 @@ jobs:
       run: |
         tfsec infrastructure/ \
           --minimum-severity HIGH \
-          --config-file .tfsec/config.yml
+          --config-file ${{ github.workspace }}/.github/workflows/.tfsec/config.yml
 
     - name: Run tfsec PR Commenter
       if: github.event_name == 'pull_request'
