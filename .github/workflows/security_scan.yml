@@ -88,6 +88,7 @@ jobs:
     - name: Run tfsec Security Check
       run: |
         tfsec infrastructure/ \
+          --minimum-severity HIGH \
           --config-file .tfsec/config.yml
 
     - name: Run tfsec PR Commenter
@@ -97,7 +98,7 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         working_directory: infrastructure/
         soft_fail_commenter: false
-        tfsec_args: --config-file=.tfsec/config.yml
+        tfsec_args: --config-file ${{ github.workspace }}/.tfsec/config.yml
 
   check-high-severity:
     name: Check for High Severity Issues
