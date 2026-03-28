@@ -272,6 +272,7 @@ resource "aws_iam_policy" "github_actions" {
        Effect = "Allow"
        Action = [
          "acm:RequestCertificate",
+         "acm:GetCertificate",
          "acm:DescribeCertificate",
          "acm:ListCertificates",
          "acm:DeleteCertificate",
