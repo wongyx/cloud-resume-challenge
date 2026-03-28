@@ -24,15 +24,3 @@ resource "aws_acm_certificate" "resume" {
     create_before_destroy = true
   }
 }
-
-# Output validation records for Cloudflare DNS
-output "validation_records" {
-  description = "DNS validation records to create"
-  value = {
-    for dvo in aws_acm_certificate.resume.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      type   = dvo.resource_record_type
-      value  = dvo.resource_record_value
-    }
-  }
-}
