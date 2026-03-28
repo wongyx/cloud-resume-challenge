@@ -26,15 +26,15 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ env.TF_VERSION }}
       
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
           aws-region: ${{ env.AWS_REGION }}
@@ -63,7 +63,7 @@ jobs:
           TF_VAR_sbom_bucket_name: ${{ vars.SBOM_BUCKET_NAME }}
       
       - name: Save plan
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-tfplan
           path: infrastructure/environments/test/tfplan
@@ -77,15 +77,15 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ env.TF_VERSION }}
       
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
           aws-region: ${{ env.AWS_REGION }}
@@ -96,7 +96,7 @@ jobs:
           terraform init
       
       - name: Download plan
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: test-tfplan
           path: infrastructure/environments/test/
@@ -115,7 +115,7 @@ jobs:
           cat outputs.json
       
       - name: Upload outputs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-outputs
           path: infrastructure/environments/test/outputs.json
@@ -131,15 +131,15 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ env.TF_VERSION }}
       
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
           aws-region: ${{ env.AWS_REGION }}
@@ -168,7 +168,7 @@ jobs:
           TF_VAR_sbom_bucket_name: ${{ vars.SBOM_BUCKET_NAME }}
       
       - name: Save plan
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: prod-tfplan
           path: infrastructure/environments/prod/tfplan
@@ -191,15 +191,15 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ env.TF_VERSION }}
       
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
           aws-region: ${{ env.AWS_REGION }}
@@ -210,7 +210,7 @@ jobs:
           terraform init
       
       - name: Download plan
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: prod-tfplan
           path: infrastructure/environments/prod/
@@ -229,7 +229,7 @@ jobs:
           cat outputs.json
       
       - name: Upload outputs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: prod-outputs
           path: infrastructure/environments/prod/outputs.json

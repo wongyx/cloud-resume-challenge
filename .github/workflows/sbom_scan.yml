@@ -37,7 +37,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Install Syft
         run: |
@@ -51,7 +51,7 @@ jobs:
             --output cyclonedx-json=../../../sbom-python-${GITHUB_SHA:0:7}.json
       
       - name: Upload Python SBOM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-python
           path: |
@@ -64,7 +64,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Install Syft
         run: |
@@ -86,7 +86,7 @@ jobs:
             --output cyclonedx-json=../sbom-npm-${GITHUB_SHA:0:7}.json
       
       - name: Upload NPM SBOM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-npm
           path: |
@@ -102,13 +102,13 @@ jobs:
     
     steps:
       - name: Download Python SBOM
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: sbom-python
           path: ./sbom-artifacts
       
       - name: Download NPM SBOM
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: sbom-npm
           path: ./sbom-artifacts
@@ -177,7 +177,7 @@ jobs:
         continue-on-error: true
       
       - name: Upload Grype results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: grype-results
@@ -290,19 +290,19 @@ jobs:
     
     steps:
       - name: Download Python SBOM
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: sbom-python
           path: ./sbom-artifacts
       
       - name: Download NPM SBOM
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: sbom-npm
           path: ./sbom-artifacts
       
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
           aws-region: ${{ env.AWS_REGION }}
@@ -349,14 +349,14 @@ jobs:
     
     steps:
       - name: Download Python SBOM
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: sbom-python
           path: ./sbom-artifacts
         continue-on-error: true
       
       - name: Download NPM SBOM
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: sbom-npm
           path: ./sbom-artifacts
