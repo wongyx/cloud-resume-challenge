@@ -14,7 +14,8 @@
         <h1>Wong Yong Xiang</h1>
       <p class="contact"> 
         <a href="https://www.linkedin.com/in/wongyongxiang" target="_blank">LinkedIn</a> | 
-        <a href="https://github.com/wongyx" target="_blank">GitHub</a>
+        <a href="https://github.com/wongyx" target="_blank">GitHub</a> |
+        <a href="https://www.wongyx.com" target="_blank">My Website</a>
       </p>
       </div>
 
