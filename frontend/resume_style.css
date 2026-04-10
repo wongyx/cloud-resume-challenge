@@ -17,7 +17,9 @@ body {
 header.resume-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
+  position: relative;
   margin-bottom: 30px;
 }
 
@@ -68,13 +70,6 @@ ul {
 .skills li {
   list-style-type: square;
   margin-bottom: 3px;
-}
-
-header.resume-header {
-  position: relative;
-  text-align: center;
-  margin-bottom: 30px;
-  margin-left: 300px;
 }
 
 .header-left {
