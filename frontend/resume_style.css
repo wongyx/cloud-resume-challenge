@@ -73,7 +73,7 @@ ul {
 }
 
 .header-left {
-  position: relative;
+  flex: 1;
   text-align: center;
 }
 
@@ -102,4 +102,15 @@ ul {
 
 .item li {
     margin-bottom: 5px;
+}
+
+@media (max-width: 850px) {
+  header.resume-header {
+    flex-direction: column;
+    align-items: center;
+  }
+  .visitor-counter {
+    position: static;
+    margin-top: 12px;
+  }
 }
