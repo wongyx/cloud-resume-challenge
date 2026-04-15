@@ -1,4 +1,3 @@
-# CloudFront Origin Access Control (OAC)
 resource "aws_cloudfront_origin_access_control" "resume" {
   name                              = "${var.bucket_name}-oac"
   description                       = "OAC for ${var.bucket_name}"
@@ -7,14 +6,13 @@ resource "aws_cloudfront_origin_access_control" "resume" {
   signing_protocol                  = "sigv4"
 }
 
-# CloudFront Distribution
 resource "aws_cloudfront_distribution" "resume" {
   enabled             = true
   is_ipv6_enabled     = true
   comment             = "Resume website distribution - ${var.environment}"
   default_root_object = "index.html"
   aliases             = var.domain_name != "" ? [var.domain_name] : []
-  price_class         = "PriceClass_All"  # Use only North America and Europe (cheapest)
+  price_class         = "PriceClass_All"
 
   origin {
     domain_name              = aws_s3_bucket.resume.bucket_regional_domain_name
@@ -42,7 +40,6 @@ resource "aws_cloudfront_distribution" "resume" {
     compress               = true
   }
 
-  # Custom error response for SPA behavior (optional)
   custom_error_response {
     error_code            = 404
     response_code         = 200
@@ -64,7 +61,6 @@ resource "aws_cloudfront_distribution" "resume" {
   }
 
   viewer_certificate {
-    # If we have an ACM certificate ARN, use it; otherwise use CloudFront default
     cloudfront_default_certificate = var.acm_certificate_arn == "" ? true : false
     acm_certificate_arn            = var.acm_certificate_arn != "" ? var.acm_certificate_arn : null
     ssl_support_method             = var.acm_certificate_arn != "" ? "sni-only" : null
