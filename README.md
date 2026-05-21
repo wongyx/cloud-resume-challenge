@@ -2,7 +2,7 @@
 
 This is my attempt at the Cloud Resume Challenge, a serverless resume website deployed on AWS, built to demonstrate practical skills in cloud infrastructure, CI/CD automation, and DevSecOps practices.
 
-The website can be found at: [www.wongyx.com](https://www.wongyx.com)
+The website can be found at: [resume.wongyx.com](https://resume.wongyx.com)
 
 ---
 
