@@ -41,7 +41,7 @@
       <h2>Skills</h2>
       <ul class="skills">
         <li><b>Security Tools & Testing:</b> Burp Suite, Postman, Golang code review, Python scripting</li>
-        <li><b>Cloud & DevOps:</b> AWS, Terraform, Git, GitHub CI/CD, Linux systems</li>
+        <li><b>Cloud & DevOps:</b> AWS, Terraform, Git, GitHub CI/CD, Linux systems, Docker, Kubernetes</li>
         <li><b>Languages:</b> Native proficiency in English and Mandarin Chinese</li>
       </ul>
     </section>
@@ -61,7 +61,8 @@
         <ul>
           <li>Integrated 'Shift Left' security practices into the SDLC by partnering with engineering teams for the development of internal systems. Conduct deep-dive audits of Golang source code and RESTful APIs, remediating vulnerabilities prior to production.</li>
           <li>Constructed the mapping of complex AWS and on-premise network topology, and performed security audits of firewalls and AWS Security Groups to eliminate misconfigurations and enforce least-privilege access.</li>
-          <li>Developed and evaluated a prototype fuzzer based on recent research</li>
+          <li>Detected and reported an InfluxDB injection vulnerability during code review, managing end-to-end disclosure and formally tracking remediation through Jira</li>
+          <li>Developed a custom Claude AI skill to automate sensitive data exposure detection in source code, leveraging it to identify plaintext passphrase logging. Coordinated with DevOps to restrict log access and remediated the issue by working with developers to remove the exposure at the code level</li>
           <li>Led Proof of Concept (POC) evaluations for third-party security vendors, aligning technical capabilities with organisational risk requirements to ensure high-ROI tool acquisition.</li>
           <li>Executed security assessments of client-facing applications at the pre-launch stage using BurpSuite, ensuring all vulnerabilities were addressed to protect the brand and user data upon public release</li>
         </ul>
@@ -96,10 +97,20 @@
       <div class="item">
         <h3>Cloud Resume Challenge</h3>
         <ul>
-          <li>Deployed serverless cloud resume website on AWS using S3, CloudFront, Lambda, and DynamoDB.</li>
-          <li>Provisioned multi-environment infrastructure using Terraform with remote state in S3 and locking via DynamoDB.</li>
-          <li>Built CI/CD pipeline with GitHub Actions integrating security scanning (CodeQL, tfsec) and SCA (Syft + Grype).</li>
+          <li>Deployed serverless cloud resume website on AWS using S3, CloudFront, API Gateway, Lambda, and DynamoDB, with CloudFlare as DNS and TLS certificate stored in ACM</li>
+          <li>Provisioned multi-environment infrastructure using Terraform with remote state in S3 and locking via DynamoDB</li>
+          <li>Built CI/CD pipeline with GitHub Actions integrating security scanning (CodeQL, tfsec) and SCA (Syft + Grype)</li>
           <li>Secured pipeline access using GitHub OIDC authentication with least-privilege IAM policies.</li>
+        </ul>
+      </div>
+      
+      <div class="item">
+        <h3>Phishing URL Scanner</h3>
+        <ul>
+          <li>Designed and implemented defense-in-depth for a Go-based URL scanner across container, cluster, and cloud layers, covering image hardening, pod security, network segmentation, IAM, and secrets management</li>
+          <li>Authored a Kubernetes NetworkPolicy implementing least-privilege ingress and egress traffic</li>
+          <li>Automated security scanning in CI/CD via GitHub Actions with SAST (Semgrep), secret detection (Gitleaks), and container scanning (Trivy), gating PR merges on high and critical severity</li>
+          <li>Eliminated long-lived cloud credentials in workloads by configuring IRSA for the AWS Load Balancer Controller and External Secrets Operator, federating pod identity through the EKS OIDC provider</li>
         </ul>
       </div>
     </section>
