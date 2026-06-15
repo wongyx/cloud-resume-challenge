@@ -56,7 +56,7 @@
     <section>
       <h2>Work Experience</h2>
       <div class="item">
-        <h3>Matrixport – Cybersecurity Engineer</h3>
+        <h3>BIT (formerly Matrixport) – Cybersecurity Engineer</h3>
         <span class="date">July 2025 – Present</span>
         <ul>
           <li>Integrated 'Shift Left' security practices into the SDLC by partnering with engineering teams for the development of internal systems. Conduct deep-dive audits of Golang source code and RESTful APIs, remediating vulnerabilities prior to production.</li>
